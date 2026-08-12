@@ -626,6 +626,112 @@
 </div>
 
 <script>
+// IndexedDB-backed storage shim: more resilient than localStorage for iOS "Add to Home Screen" apps.
+// Falls back to localStorage if IndexedDB is unavailable.
+const DB_NAME = 'daily-routine-db';
+const STORE_NAME = 'kv';
+let dbPromise = null;
+function openDB(){
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(STORE_NAME); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbPromise;
+}
+async function idbGet(key){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbSet(key, value){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbDelete(key){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbKeys(){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAllKeys();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+const hasIDB = typeof indexedDB !== 'undefined';
+
+window.storage = {
+  async get(key, shared){
+    try{
+      if (hasIDB){
+        const value = await idbGet(key);
+        if (value === undefined) return null;
+        return { key, value, shared: !!shared };
+      }
+      const raw = localStorage.getItem(key);
+      if (raw === null) return null;
+      return { key, value: raw, shared: !!shared };
+    }catch(e){ return null; }
+  },
+  async set(key, value, shared){
+    try{
+      if (hasIDB){ await idbSet(key, value); }
+      else { localStorage.setItem(key, value); }
+      return { key, value, shared: !!shared };
+    }catch(e){ return null; }
+  },
+  async delete(key, shared){
+    try{
+      let existed = false;
+      if (hasIDB){
+        existed = (await idbGet(key)) !== undefined;
+        await idbDelete(key);
+      } else {
+        existed = localStorage.getItem(key) !== null;
+        localStorage.removeItem(key);
+      }
+      return { key, deleted: existed, shared: !!shared };
+    }catch(e){ return null; }
+  },
+  async list(prefix, shared){
+    try{
+      let keys;
+      if (hasIDB){ keys = await idbKeys(); }
+      else {
+        keys = [];
+        for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+      }
+      if (prefix) keys = keys.filter(k => String(k).startsWith(prefix));
+      return { keys, prefix, shared: !!shared };
+    }catch(e){ return null; }
+  }
+};
+
+// Best-effort request to protect this site's storage from iOS eviction.
+if (navigator.storage && navigator.storage.persist){
+  navigator.storage.persist().catch(()=>{});
+}
+
 const ICONS = {
   news: `<svg class="icon" viewBox="0 0 44 44"><rect x="6" y="10" width="32" height="26" rx="2"/><path d="M6 16h32"/><path d="M12 22h8"/><path d="M12 27h8"/><path d="M25 22h7M25 27h7M25 32h7"/></svg>`,
   book: `<svg class="icon" viewBox="0 0 44 44"><path d="M22 12c-3-3-9-4-14-3v24c5-1 11 0 14 3 3-3 9-4 14-3V9c-5-1-11 0-14 3z"/><path d="M22 12v24"/></svg>`,
@@ -815,6 +921,48 @@ async function saveHistory(){
   try{ await window.storage.set('completion-history', JSON.stringify(history), false); }
   catch(e){ console.error('storage error', e); }
 }
+const BACKUP_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'weight-entries'];
+
+async function exportBackup(){
+  const data = {};
+  for (const k of BACKUP_KEYS){
+    try{
+      const res = await window.storage.get(k, false);
+      if (res) data[k] = res.value;
+    }catch(e){}
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = localDateKey(new Date());
+  a.download = `daily-routine-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function importBackup(file){
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    for (const k of BACKUP_KEYS){
+      if (data[k] !== undefined){
+        await window.storage.set(k, data[k], false);
+      }
+    }
+    STEPS = await loadSteps();
+    skillNotes = await loadSkillNotes();
+    completions = await loadCompletions();
+    history = await loadHistory();
+    view = 'grid';
+    render();
+  }catch(e){
+    alert('Could not read that backup file. Make sure it\'s a JSON file exported from this app.');
+  }
+}
+
 async function loadWeights(){
   try{
     const res = await window.storage.get('weight-entries', false);
@@ -1349,10 +1497,21 @@ function renderOuterActions(){
       <button class="outer-btn" id="addWindowOuterBtn">+ Add a window</button>
       <button class="outer-btn" id="reorderOuterBtn">⇅ Reorder windows</button>
       <button class="outer-btn" id="progressOuterBtn">📈 Progress</button>
+      <button class="outer-btn" id="backupOuterBtn">⬇ Backup</button>
+      <button class="outer-btn" id="restoreOuterBtn">⬆ Restore</button>
+      <input type="file" id="restoreFileInput" accept="application/json" style="display:none">
     `;
     document.getElementById('addWindowOuterBtn').addEventListener('click', ()=>{ addDraft = null; view = 'add'; render(); });
     document.getElementById('reorderOuterBtn').addEventListener('click', ()=>{ view = 'manage'; render(); });
     document.getElementById('progressOuterBtn').addEventListener('click', ()=>{ view = 'progress'; render(); });
+    document.getElementById('backupOuterBtn').addEventListener('click', exportBackup);
+    document.getElementById('restoreOuterBtn').addEventListener('click', ()=>{
+      document.getElementById('restoreFileInput').click();
+    });
+    document.getElementById('restoreFileInput').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await importBackup(file);
+    });
     return;
   }
 
