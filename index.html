@@ -399,6 +399,7 @@
     padding: 16px 10px 12px;
     text-align:center;
     cursor:pointer;
+    overflow:hidden;
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
   }
   .win-card:hover{ transform: translateY(-2px); border-color:#d8d0b8; }
@@ -406,13 +407,22 @@
     background: color-mix(in srgb, var(--sage) 12%, #fffefc);
     border-color: color-mix(in srgb, var(--sage) 55%, #ece7d9);
   }
+  .win-fill{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    background: color-mix(in srgb, var(--sage) 32%, transparent);
+    transition: height 0.25s ease;
+    z-index:0;
+  }
   .win-card .icon{
+    position:relative; z-index:1;
     width: 26px; height: 26px;
     margin: 0 auto 8px;
     stroke: var(--dawn);
   }
   .win-card.win-done .icon{ stroke: var(--sage); }
   .win-title{
+    position:relative; z-index:1;
     font-size: 12px;
     font-weight: 600;
     line-height: 1.3;
@@ -420,6 +430,7 @@
   }
   .win-check{
     position:absolute;
+    z-index:2;
     top: 8px; right: 8px;
     width: 21px; height: 21px;
     border-radius: 50%;
@@ -435,6 +446,40 @@
     border-color: var(--sage);
   }
   .win-check:focus-visible{ outline: 2px solid var(--dawn); outline-offset:2px; }
+  .win-check-frac{
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  .link-list{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+  }
+  .link-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .link-row-btn{ flex:1; }
+  .link-check{
+    flex-shrink:0;
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 1.5px solid #d8d0b8;
+    background: #fff;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    cursor:pointer;
+    padding:0;
+  }
+  .link-check.checked{
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+  .link-check:focus-visible{ outline: 2px solid var(--dawn); outline-offset:2px; }
 
   .next-main.complete-done{
     background: linear-gradient(135deg, var(--sage), #8fae9b);
@@ -752,107 +797,91 @@ function iconFor(s){ return ICONS[s.iconKey] || ICONS.custom; }
 
 const DEFAULT_STEPS = [
   {
-    id:'athkar', iconKey:'beads', title:"Morning Athkar",
-    sub:"A few minutes of remembrance before anything else.",
-    links:[{label:"Open App", url:"https://www.hisnmuslim.com/en/", primary:true}]
-  },
-  {
-    id:'quran', iconKey:'book', title:"Read Quran",
-    sub:"One page of Qur'an to start the day grounded.",
-    links:[{label:"Open App", url:"https://quran.com", primary:true}]
-  },
-  {
-    id:'weight', iconKey:'scale', title:"Log today's weight",
-    sub:"One number, logged daily, tells a better story than one number alone.",
-    type:'weight'
-  },
-  {
-    id:'bills', iconKey:'custom', title:"Take Bills",
-    sub:"Check and pay any bills due.",
-    links:[]
-  },
-  {
-    id:'alarabiya', iconKey:'news', title:"Al Arabiya",
-    sub:"A second angle on today's news.",
-    links:[{label:"Open App", url:"https://www.alarabiya.net", primary:true}]
-  },
-  {
-    id:'news', iconKey:'news', title:"BBC",
-    sub:"Skim what's happening before the day gets loud.",
-    links:[{label:"Open App", url:"https://www.bbc.com/news", primary:true}]
-  },
-  {
-    id:'calendar', iconKey:'calendar', title:"Calendar",
-    sub:"A quick look at the day ahead — meetings, plans, gaps.",
-    links:[{label:"Open App", url:"https://calendar.google.com", primary:true}]
-  },
-  {
-    id:'mail', iconKey:'mail', title:"Inbox",
-    sub:"Clear or triage what came in overnight.",
-    links:[{label:"Open App", url:"https://mail.google.com", primary:true}]
-  },
-  {
-    id:'sports', iconKey:'ball', title:"Match check",
-    sub:"Al Hilal and Chelsea — today's fixtures and this week's results.",
+    id:"athkar", iconKey:"beads", title:"🕋 Athkar + Quran",
+    sub:"",
     links:[
-      {label:"Open App", url:"https://www.google.com/search?q=Al+Hilal+fixtures+results", primary:true},
-      {label:"Open App", url:"https://www.chelseafc.com/en/matches", primary:false}
+      {label:"Open App", url:"https://apps.apple.com/sa/app/golden-quran-%D8%A7%D9%84%D9%85%D8%B5%D8%AD%D9%81-%D8%A7%D9%84%D8%B0%D9%87%D8%A8%D9%8A/id852497554", primary:true}
     ]
   },
   {
-    id:'podcast', iconKey:'headphones', title:"English podcast",
+    id:"talk", iconKey:"custom", title:"🔋Power",
+    sub:"Reach out to someone you care about.",
+    links:[
+      {label:"Reflect on confidence", url:"-", primary:true},
+      {label:"Talk to someone", url:"-", primary:false}
+    ]
+  },
+  {
+    id:"bills", iconKey:"custom", title:"💊 Take Pills",
+    sub:"Antihistamine+ Magnesium + Createin",
+    links:[]
+  },
+  {
+    id:"alarabiya", iconKey:"news", title:"📰 News",
+    sub:"A second angle on today's news.",
+    links:[
+      {label:"Al Arabiya", url:"https://apps.apple.com/sa/app/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-alarabiya/id542914362", primary:true},
+      {label:"BBC", url:"https://www.bbc.com/news", primary:false},
+      {label:"Match check", url:"https://apps.apple.com/sa/app/365scores-live-scores-news/id571801488", primary:false},
+      {label:"٨", url:"https://www.snapchat.com/add/thmanyahsports", primary:false}
+    ]
+  },
+  {
+    id:"calendar", iconKey:"calendar", title:"🗓️ Calendar + Mail",
+    sub:"A quick look at the day ahead — meetings, plans, gaps.",
+    links:[
+      {label:"Calendar", url:"https://apps.apple.com/sa/app/calendar/id1108185179", primary:true},
+      {label:"Mail", url:"https://apps.apple.com/sa/app/mail/id1108187098", primary:false}
+    ]
+  },
+  {
+    id:"stocks", iconKey:"custom", title:"📈 Stocks",
+    sub:"See how your portfolio is doing today.",
+    links:[
+      {label:"Open App", url:"https://apps.apple.com/sa/app/sahm-stock-trading/id1630074503", primary:true}
+    ]
+  },
+  {
+    id:"podcast", iconKey:"headphones", title:"☕️ English",
     sub:"Listen to an English-language podcast to keep your ear tuned.",
     links:[
-      {label:"Open App", url:"https://open.spotify.com/search/english%20podcast", primary:true},
-      {label:"Open App", url:"https://podcasts.apple.com/us/genre/podcasts/id26", primary:false}
+      {label:"⚫️ BBC Businesses", url:"https://podcasts.apple.com/sa/podcast/business-daily/id261786876", primary:true},
+      {label:"🟡 English Businesses", url:"https://podcasts.apple.com/sa/podcast/business-english-from-all-ears-english/id1650591741", primary:false},
+      {label:"⚪️ English speaking practice", url:"https://chatgpt.com/g/g-p-698dc7995f2c8191841e3fbd133ac12b", primary:false},
+      {label:"🔵 Transitions", url:"https://apps.apple.com/sa/app/google-translate/id414706506", primary:false}
     ]
   },
   {
-    id:'english', iconKey:'chat', title:"English speaking practice",
-    sub:"5 minutes of listening and speaking practice with ChatGPT.",
-    links:[{label:"Open App", url:"https://chat.openai.com", primary:true}]
-  },
-  {
-    id:'reading', iconKey:'book', title:"Book reading",
+    id:"reading", iconKey:"book", title:"📖 Book reading",
     sub:"Read at least 5 pages of a book.",
     links:[
-      {label:"Open App", url:"https://read.amazon.com", primary:true},
-      {label:"Open App", url:"https://www.goodreads.com", primary:false}
+      {label:"Before Coffee Gets Cold", url:"--", primary:true},
+      {label:"Hydrogen", url:"https://www.iea.org/energy-system/low-emissions-fuels/hydrogen", primary:false},
+      {label:"Energy", url:"https://www.nature.com/nenergy/", primary:false},
+      {label:"Materials", url:"https://www.nature.com/nmat/", primary:false},
+      {label:"3D Printing", url:"https://www.tctmagazine.com/", primary:false}
     ]
   },
   {
-    id:'talk', iconKey:'custom', title:"Talk with someone",
-    sub:"Reach out to someone you care about.",
-    links:[]
-  },
-  {
-    id:'steps', iconKey:'custom', title:"Walk 10000 steps",
-    sub:"Get moving and hit today's step goal.",
-    links:[]
-  },
-  {
-    id:'stocks', iconKey:'custom', title:"Check stocks",
-    sub:"See how your portfolio is doing today.",
-    links:[]
+    id:"custom-weight-msqllgua", iconKey:"custom", title:"🍉 Health",
+    sub:"",
+    links:[
+      {label:"Log body’s Weight", url:"https://apps.apple.com/sa/app/renpho-health/id1543340610", primary:true},
+      {label:"Walk 10000 steps", url:"https://apps.apple.com/sa/app/pedometer/id712286167", primary:false},
+      {label:"Gym", url:"https://plate-plan-maker.vercel.app/", primary:false}
+    ]
   }
 ];
 
 const DEFAULT_NOTES = {
-  athkar: "أبدأ يومي بأذكار الصباح لأشحن نفسي روحيًا وأحافظ على صلتي بالله قبل أي شيء آخر.",
-  quran: "أقرأ صفحة واحدة على الأقل من القرآن يوميًا لأطوّر حفظي وفهمي وأزيد قربي من كتاب الله.",
-  news: "أتابع أهم الأخبار المحلية والعالمية يوميًا لأبقى مطلعًا وواعيًا بما يحدث حولي في العالم.",
-  alarabiya: "أتابع أهم الأخبار المحلية والعالمية يوميًا لأبقى مطلعًا وواعيًا بما يحدث حولي في العالم.",
-  calendar: "أراجع مواعيدي واجتماعاتي لهذا اليوم لأنظّم وقتي وأبدأ يومي بخطة واضحة.",
-  sports: "أتابع نتائج ومباريات فريقيّ المفضّلين (الهلال وتشيلسي) لأبقى على اطلاع بمجرياتهم أولًا بأول.",
-  bills: "أتابع فواتيري وأسددها في وقتها لأتجنب الرسوم المتأخرة وأحافظ على تنظيم أموري المالية.",
-  talk: "أتواصل مع شخص مقرب يوميًا للحفاظ على علاقاتي الاجتماعية وعدم الانعزال.",
-  steps: "أمشي 10000 خطوة يوميًا للحفاظ على نشاطي البدني وصحتي العامة.",
-  stocks: "أتابع أسهمي واستثماراتي يوميًا لأبقى مطلعًا على أدائها واتخاذ قرارات مدروسة.",
-  mail: "أتفقد بريدي الإلكتروني كل صباح لأرد على المهم وأنظّم مهام يومي بشكل صحيح.",
-  weight: "أسجّل وزني يوميًا لأتابع تقدمي نحو هدفي في إنقاص الوزن والحفاظ على لياقتي.",
-  podcast: "أستمع إلى بودكاست باللغة الإنجليزية يوميًا لتحسين مهارتي في الاستماع والتعرّض المستمر للغة.",
-  english: "أتحدث مع ChatGPT لمدة 5 دقائق يوميًا لتحسين مهارتي في الاستماع والمحادثة باللغة الإنجليزية.",
-  reading: "أقرأ 5 صفحات على الأقل يوميًا من كتاب لتوسيع معرفتي وبناء عادة القراءة المستمرة."
+  "athkar": "أبدأ يومي بأذكار الصباح لأشحن نفسي روحيًا وأحافظ على صلتي بالله قبل أي شيء آخر.",
+  "bills": "أتابع فواتيري وأسددها في وقتها لأتجنب الرسوم المتأخرة وأحافظ على تنظيم أموري المالية.",
+  "alarabiya": "أتابع أهم الأخبار المحلية والعالمية يوميًا لأبقى مطلعًا وواعيًا بما يحدث حولي في العالم.",
+  "calendar": "أراجع مواعيدي واجتماعاتي لهذا اليوم لأنظّم وقتي وأبدأ يومي بخطة واضحة.",
+  "podcast": "أستمع إلى بودكاست باللغة الإنجليزية يوميًا لتحسين مهارتي في الاستماع والتعرّض المستمر للغة.",
+  "reading": "أقرأ 5 صفحات على الأقل يوميًا من كتاب لتوسيع معرفتي وبناء عادة القراءة المستمرة.",
+  "talk": "أتواصل مع شخص مقرب يوميًا للحفاظ على علاقاتي الاجتماعية وعدم الانعزال.",
+  "stocks": "أتابع أسهمي واستثماراتي يوميًا لأبقى مطلعًا على أدائها واتخاذ قرارات مدروسة."
 };
 
 let STEPS = [];
@@ -989,18 +1018,81 @@ function fmtDate(d){
 function ensureToday(){
   const t = todayKey();
   if (completions.day !== t){
-    completions = { day: t, done: {} };
+    completions = { day: t, done: {}, links: {} };
   }
+  if (!completions.links) completions.links = {};
 }
-async function toggleComplete(id){
-  ensureToday();
-  const nowDone = !completions.done[id];
-  completions.done[id] = nowDone;
-  await saveCompletions();
+
+// A window with no schedule (or interval 1 starting today) is due every day.
+// Otherwise it's due only every N days, counting from its start date.
+function isDueToday(s){
+  if (!s.schedule || !s.schedule.interval || s.schedule.interval <= 1) return true;
+  const start = s.schedule.startDate;
+  if (!start) return true;
+  const startD = new Date(start + 'T00:00:00');
+  const todayD = new Date(todayKey() + 'T00:00:00');
+  const diffDays = Math.round((todayD - startD) / 86400000);
+  if (diffDays < 0) return false;
+  return diffDays % s.schedule.interval === 0;
+}
+
+// Returns { checked, total, ratio, isFull, hasLinks } for a step —
+// windows with multiple links are tracked per-link; others use the single done flag.
+function stepProgress(s){
+  const links = s.links || [];
+  if (!links.length){
+    const done = !!completions.done[s.id];
+    return { checked: done ? 1 : 0, total: 1, ratio: done ? 1 : 0, isFull: done, hasLinks: false };
+  }
+  let linkState = completions.links && completions.links[s.id];
+  if (!linkState && completions.done && completions.done[s.id]){
+    // legacy data from before per-link tracking existed — treat as fully checked
+    linkState = {};
+    for (let i = 0; i < links.length; i++) linkState[i] = true;
+  }
+  linkState = linkState || {};
+  let checked = 0;
+  for (let i = 0; i < links.length; i++) if (linkState[i]) checked++;
+  const ratio = checked / links.length;
+  return { checked, total: links.length, ratio, isFull: checked === links.length, hasLinks: true };
+}
+
+async function recordHistory(id, isFull){
   const key = todayKey();
   if (!history[key]) history[key] = {};
-  if (nowDone) history[key][id] = true; else delete history[key][id];
+  if (isFull) history[key][id] = true; else delete history[key][id];
   await saveHistory();
+}
+
+// Bulk toggle: used by the grid checkmark and the detail "Mark complete" button.
+async function toggleComplete(id){
+  ensureToday();
+  const s = STEPS.find(x => x.id === id);
+  if (!s) return;
+  const prog = stepProgress(s);
+  const nowDone = !prog.isFull;
+  if (prog.hasLinks){
+    const state = {};
+    if (nowDone){ for (let i = 0; i < s.links.length; i++) state[i] = true; }
+    completions.links[id] = state;
+  }
+  completions.done[id] = nowDone;
+  await saveCompletions();
+  await recordHistory(id, nowDone);
+  render();
+}
+
+// Per-link toggle: checking/unchecking one link's square.
+async function toggleLinkComplete(id, idx){
+  ensureToday();
+  const s = STEPS.find(x => x.id === id);
+  if (!s) return;
+  if (!completions.links[id]) completions.links[id] = {};
+  completions.links[id][idx] = !completions.links[id][idx];
+  const prog = stepProgress(s);
+  completions.done[id] = prog.isFull;
+  await saveCompletions();
+  await recordHistory(id, prog.isFull);
   render();
 }
 
@@ -1030,28 +1122,9 @@ async function moveStep(id, dir){
   render();
 }
 async function migrateSteps(){
-  let changed = false;
-  ['english', 'reading', 'bills', 'talk', 'steps', 'stocks'].forEach(id => {
-    if (!STEPS.find(s => s.id === id)){
-      const def = DEFAULT_STEPS.find(s => s.id === id);
-      if (def){ STEPS.push({...def, links: def.links ? def.links.map(l=>({...l})) : []}); changed = true; }
-    }
-  });
-  const renameChecks = [
-    { id: 'podcast', oldTitle: 'Something for the commute' },
-    { id: 'quran', oldTitle: 'Read a page' },
-    { id: 'news', oldTitle: "Today's headlines" },
-    { id: 'calendar', oldTitle: "What's on today" }
-  ];
-  renameChecks.forEach(({ id, oldTitle }) => {
-    const idx = STEPS.findIndex(s => s.id === id);
-    if (idx !== -1 && STEPS[idx].title === oldTitle){
-      const def = DEFAULT_STEPS.find(s => s.id === id);
-      STEPS[idx] = {...STEPS[idx], title: def.title, sub: def.sub};
-      changed = true;
-    }
-  });
-  if (changed) await saveSteps();
+  // No forced additions/renames anymore — DEFAULT_STEPS now reflects the
+  // actual curated routine, so nothing should be auto-inserted on top of it.
+  return;
 }
 
 // ---------- progress arc ----------
@@ -1164,25 +1237,75 @@ async function renderWeightStep(s){
 }
 
 // ---------- link detail (view mode) ----------
+const CHECK_SVG_SM = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg>';
+
 function renderLinkStep(s){
   const links = s.links || [];
+  const linkState = (completions.links && completions.links[s.id]) || {};
   card.innerHTML = `
     ${iconFor(s)}
     <h1>${s.title}</h1>
     ${s.sub ? `<p class="sub">${s.sub}</p>` : ''}
-    ${links.length ? `<div class="actions">
-      ${links.map(l => `<a class="btn ${l.primary?'btn-primary':'btn-secondary'}" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="btn-arrow">↗</span></a>`).join('')}
+    ${links.length ? `<div class="link-list">
+      ${links.map((l,i) => {
+        const checked = !!linkState[i];
+        return `
+        <div class="link-row">
+          <a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="btn-arrow">↗</span></a>
+          <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark link incomplete':'Mark link complete'}">${checked?CHECK_SVG_SM:''}</button>
+        </div>`;
+      }).join('')}
     </div>` : '<p class="skill-note-empty" style="margin-top:6px;">No link set for this window yet.</p>'}
   `;
+  card.querySelectorAll('.link-check').forEach(btn=>{
+    btn.addEventListener('click', ()=> toggleLinkComplete(s.id, parseInt(btn.dataset.idx, 10)));
+  });
 }
 
 // ---------- unified window editor (title, description, dynamic optional links) ----------
+function renderScheduleHTML(idPrefix, interval, startOption){
+  const intervalOptions = [1,2,3,4,5,6,7].map(n => {
+    const label = n === 1 ? 'Every day' : n === 2 ? 'Every 2 days (day on, day off)' : `Every ${n} days`;
+    return `<option value="${n}" ${interval===n?'selected':''}>${label}</option>`;
+  }).join('');
+  const startOptions = [
+    { value:'today', label:'Today' },
+    { value:'tomorrow', label:'Tomorrow' },
+    { value:'3', label:'In 3 days' },
+    { value:'4', label:'In 4 days' },
+    { value:'5', label:'In 5 days' },
+    { value:'6', label:'In 6 days' },
+    { value:'7', label:'In 7 days' }
+  ].map(o => `<option value="${o.value}" ${startOption===o.value?'selected':''}>${o.label}</option>`).join('');
+  return `
+    <div class="edit-field">
+      <label>Repeat</label>
+      <select class="edit-input" id="${idPrefix}Interval">${intervalOptions}</select>
+    </div>
+    <div class="edit-field" style="margin-bottom:16px;">
+      <label>Starting</label>
+      <select class="edit-input" id="${idPrefix}Start">${startOptions}</select>
+    </div>
+  `;
+}
+function computeSchedule(interval, startOption){
+  if (interval <= 1 && startOption === 'today') return null; // plain "every day", no restriction needed
+  const offsetDays = startOption === 'tomorrow' ? 1 : startOption === 'today' ? 0 : (parseInt(startOption, 10) || 0);
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return { interval, startDate: localDateKey(d) };
+}
+
 function captureEditDraftFromInputs(){
   if (!editDraft) return;
   const titleInput = document.getElementById('editTitleInput');
   const subInput = document.getElementById('editSubInput');
   if (titleInput) editDraft.title = titleInput.value;
   if (subInput) editDraft.sub = subInput.value;
+  const intervalInput = document.getElementById('editInterval');
+  const startInput = document.getElementById('editStart');
+  if (intervalInput) editDraft.interval = parseInt(intervalInput.value, 10) || 1;
+  if (startInput) editDraft.startOption = startInput.value;
   const rows = card.querySelectorAll('.link-edit-row');
   const links = [];
   rows.forEach(row=>{
@@ -1221,6 +1344,7 @@ function renderWindowEditor(s){
         <label>Short description (optional)</label>
         <input type="text" class="edit-input" dir="auto" id="editSubInput" value="${editDraft.sub.replace(/"/g,'&quot;')}">
       </div>
+      ${renderScheduleHTML('edit', editDraft.interval, editDraft.startOption)}
     </div>
     <div class="edit-field" style="margin-bottom:10px;">
       <label>Links (optional — add as many as you like)</label>
@@ -1258,9 +1382,10 @@ function renderWindowEditor(s){
     const finalLinks = editDraft.links
       .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }))
       .filter(l => l.url);
+    const schedule = computeSchedule(editDraft.interval, editDraft.startOption);
     const idx = STEPS.findIndex(x => x.id === s.id);
     if (idx !== -1){
-      STEPS[idx] = { ...STEPS[idx], title, sub: editDraft.sub.trim(), links: finalLinks };
+      STEPS[idx] = { ...STEPS[idx], title, sub: editDraft.sub.trim(), links: finalLinks, schedule };
       await saveSteps();
     }
     editingWindow = null;
@@ -1275,12 +1400,15 @@ function renderWindowEditor(s){
 }
 
 function renderDetailNav(s){
-  const isDone = !!completions.done[s.id];
+  const prog = stepProgress(s);
+  const label = prog.isFull
+    ? 'Completed ✓'
+    : (prog.hasLinks && prog.checked > 0 ? `Mark all complete (${prog.checked}/${prog.total}) ✓` : 'Mark complete ✓');
   const nav = document.createElement('div');
   nav.className = 'nav';
   nav.innerHTML = `
     <button id="backToGridBtn" class="back-main">← Overview</button>
-    <button id="completeBtn" class="next-main ${isDone ? 'complete-done' : ''}">${isDone ? 'Completed ✓' : 'Mark complete ✓'}</button>
+    <button id="completeBtn" class="next-main ${prog.isFull ? 'complete-done' : ''}">${label}</button>
   `;
   card.appendChild(nav);
   document.getElementById('backToGridBtn').addEventListener('click', ()=>{ view = 'grid'; activeId = null; render(); });
@@ -1290,20 +1418,24 @@ function renderDetailNav(s){
 // ---------- grid (overview) ----------
 function renderGrid(){
   ensureToday();
-  const doneCount = STEPS.filter(s => completions.done[s.id]).length;
+  const dueSteps = STEPS.filter(isDueToday);
+  const doneCount = dueSteps.filter(s => stepProgress(s).isFull).length;
   card.innerHTML = `
     <div class="grid-header">
       <h1>Good morning.</h1>
-      <p class="sub">${STEPS.length ? `${doneCount} of ${STEPS.length} done today` : "No windows yet — add the first one below."}</p>
+      <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No windows yet — add the first one below.")}</p>
     </div>
     <div class="win-grid">
-      ${STEPS.map(s => {
-        const isDone = !!completions.done[s.id];
+      ${dueSteps.map(s => {
+        const prog = stepProgress(s);
+        const pct = Math.round(prog.ratio * 100);
+        const badge = prog.isFull
+          ? CHECK_SVG_SM
+          : (prog.hasLinks && prog.checked > 0 ? `<span class="win-check-frac">${prog.checked}/${prog.total}</span>` : '');
         return `
-        <div class="win-card ${isDone ? 'win-done' : ''}" data-id="${s.id}">
-          <button class="win-check ${isDone ? 'checked' : ''}" data-id="${s.id}" aria-label="${isDone ? 'Mark incomplete' : 'Mark complete'}">
-            ${isDone ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg>' : ''}
-          </button>
+        <div class="win-card ${prog.isFull ? 'win-done' : ''}" data-id="${s.id}">
+          <div class="win-fill" style="height:${pct}%"></div>
+          <button class="win-check ${prog.isFull ? 'checked' : ''}" data-id="${s.id}" aria-label="${prog.isFull ? 'Mark incomplete' : 'Mark complete'}">${badge}</button>
           <div class="win-icon">${iconFor(s)}</div>
           <div class="win-title">${s.title}</div>
         </div>`;
@@ -1361,6 +1493,10 @@ function captureAddDraftFromInputs(){
   const subInput = document.getElementById('newSubInput');
   if (titleInput) addDraft.title = titleInput.value;
   if (subInput) addDraft.sub = subInput.value;
+  const intervalInput = document.getElementById('newInterval');
+  const startInput = document.getElementById('newStart');
+  if (intervalInput) addDraft.interval = parseInt(intervalInput.value, 10) || 1;
+  if (startInput) addDraft.startOption = startInput.value;
   const rows = card.querySelectorAll('.link-edit-row');
   const links = [];
   rows.forEach(row=>{
@@ -1371,7 +1507,7 @@ function captureAddDraftFromInputs(){
   addDraft.links = links;
 }
 function renderAddForm(){
-  if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:''}] };
+  if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:''}], interval:1, startOption:'today' };
   card.innerHTML = `
     <h1 style="font-size:26px;">Add a window</h1>
     <div class="edit-fields">
@@ -1383,6 +1519,7 @@ function renderAddForm(){
         <label>Short description (optional)</label>
         <input type="text" class="edit-input" dir="auto" id="newSubInput" placeholder="e.g. Check messages and notifications" value="${addDraft.sub.replace(/"/g,'&quot;')}">
       </div>
+      ${renderScheduleHTML('new', addDraft.interval, addDraft.startOption)}
     </div>
     <div class="edit-field" style="margin-bottom:10px;">
       <label>Links (optional — add as many as you like)</label>
@@ -1419,7 +1556,8 @@ function renderAddForm(){
     const finalLinks = addDraft.links
       .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }))
       .filter(l => l.url);
-    const newStep = { id: slugify(title), iconKey: 'custom', title, sub: addDraft.sub.trim(), links: finalLinks };
+    const schedule = computeSchedule(addDraft.interval, addDraft.startOption);
+    const newStep = { id: slugify(title), iconKey: 'custom', title, sub: addDraft.sub.trim(), links: finalLinks, schedule };
     STEPS.push(newStep);
     await saveSteps();
     addDraft = null;
@@ -1538,7 +1676,12 @@ function renderOuterActions(){
   `;
   document.getElementById('editWindowOuterBtn').addEventListener('click', ()=>{
     editingWindow = s.id;
-    editDraft = { title: s.title, sub: s.sub || '', links: (s.links || []).map(l => ({...l})) };
+    editDraft = {
+      title: s.title, sub: s.sub || '',
+      links: (s.links || []).map(l => ({...l})),
+      interval: (s.schedule && s.schedule.interval) || 1,
+      startOption: 'today'
+    };
     render();
   });
   document.getElementById('removeWindowOuterBtn').addEventListener('click', ()=>{ removeConfirmStep = s.id; render(); });
