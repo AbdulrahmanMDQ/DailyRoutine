@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B1E3D">
 <title>Daily Routine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --night: #1B1E3D;
@@ -31,7 +31,7 @@
   body{
     margin:0;
     min-height:100vh;
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     color: var(--ink);
     background:
       radial-gradient(120% 90% at 50% 0%,
@@ -66,7 +66,7 @@
 
   .steplabel{
     text-align:center;
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size: 12px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -94,12 +94,12 @@
   }
 
   h1{
-    font-family:'Fraunces', serif;
-    font-weight:600;
+    font-family:'Inter', sans-serif;
+    font-weight:700;
     font-size: 30px;
     line-height:1.15;
     margin: 0 0 10px;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 
   .sub{
@@ -121,7 +121,7 @@
     appearance:none;
     border:none;
     cursor:pointer;
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-weight:600;
     font-size:15px;
     padding: 14px 20px;
@@ -157,7 +157,7 @@
   }
   .nav button{
     cursor:pointer;
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-weight:600;
     font-size:14px;
     letter-spacing:0.02em;
@@ -197,11 +197,11 @@
     background:none;
     border:none;
     cursor:pointer;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px;
+    font-family:'Inter', sans-serif;
+    font-size: 10.5px;
     letter-spacing: 0.03em;
     color: var(--ink-soft);
-    padding: 4px 0;
+    padding: 3px 0;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
@@ -220,14 +220,14 @@
     gap: 5px;
   }
   .edit-field label{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
   .edit-input{
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-size: 14.5px;
     padding: 11px 13px;
     border-radius: 10px;
@@ -264,7 +264,7 @@
     border-top: 1px dashed #e4dfd2;
   }
   .skill-note-label{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -283,7 +283,7 @@
   }
   .skill-note-input{
     width:100%;
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-size: 14px;
     line-height:1.5;
     padding: 11px 13px;
@@ -309,10 +309,10 @@
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     color: color-mix(in srgb, var(--day) calc(var(--t) * 100%), #f1eef9 calc((1 - var(--t)) * 100%));
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12.5px;
+    font-family:'Inter', sans-serif;
+    font-size: 10.5px;
     letter-spacing: 0.02em;
-    padding: 9px 16px;
+    padding: 6px 11px;
     border-radius: 999px;
     cursor: pointer;
     transition: background 0.15s ease;
@@ -450,7 +450,7 @@
     font-size: 9px;
     font-weight: 700;
     color: var(--ink-soft);
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
   }
 
   .link-list{
@@ -464,6 +464,11 @@
     gap: 10px;
   }
   .link-row-btn{ flex:1; }
+  .link-no-url{
+    cursor: default;
+    opacity: 0.8;
+    justify-content: center;
+  }
   .link-check{
     flex-shrink:0;
     width: 36px; height: 36px;
@@ -522,7 +527,7 @@
     border: 1px solid #e4dfd2;
     background: #fff;
     color: var(--ink-soft);
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -544,7 +549,7 @@
     font-size: 13px;
   }
   .progress-item-title{ font-weight: 500; color: var(--ink); }
-  .progress-item-count{ color: var(--ink-soft); font-family:'IBM Plex Mono', monospace; }
+  .progress-item-count{ color: var(--ink-soft); font-family:'Inter', sans-serif; }
   .progress-bar-track{
     height: 8px;
     border-radius: 999px;
@@ -574,7 +579,7 @@
   }
   .weight-input{
     flex:1;
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size:22px;
     padding: 14px 16px;
     border-radius:12px;
@@ -586,7 +591,7 @@
   .weight-input:focus-visible{ outline: 2px solid var(--dawn); outline-offset:1px; }
   .unit-toggle{
     display:flex; border:1px solid #e4dfd2; border-radius:10px; overflow:hidden;
-    font-family:'IBM Plex Mono', monospace; font-size:12px;
+    font-family:'Inter', sans-serif; font-size:12px;
   }
   .unit-toggle button{
     border:none; background:#fff; padding:10px 12px; cursor:pointer; color: var(--ink-soft);
@@ -594,7 +599,7 @@
   .unit-toggle button.active{ background: var(--dawn); color:#fff; }
 
   .save-msg{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size:12.5px;
     color: var(--sage);
     min-height: 18px;
@@ -612,7 +617,7 @@
     position:relative;
   }
   .spark-empty{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Inter', sans-serif;
     font-size:12.5px;
     color: var(--ink-soft);
     margin: 4px 0 24px;
@@ -639,7 +644,7 @@
     border: 1px solid #e4dfd2;
     border-radius: 12px;
     padding: 12px 20px;
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-weight:600;
     cursor:pointer;
     color: var(--ink-soft);
@@ -889,7 +894,6 @@ let view = 'grid'; // 'grid' | 'detail' | 'manage' | 'add' | 'progress'
 let activeId = null;
 let unit = 'kg';
 let skillNotes = {};
-let editingNoteStep = null;
 let removeConfirmStep = null;
 let editingWindow = null; // step id currently being edited (title/sub/links)
 let editDraft = null;     // { title, sub, links: [{label,url}] }
@@ -1146,42 +1150,14 @@ function setProgress(){
 
 // ---------- skill note ----------
 function renderSkillNote(s){
+  const note = skillNotes[s.id] || '';
   const wrap = document.createElement('div');
   wrap.className = 'skill-note';
-  const note = skillNotes[s.id] || '';
-  const isEditing = editingNoteStep === s.id;
-
-  if (!isEditing){
-    wrap.innerHTML = `
-      <div class="skill-note-label">Skill I'm improving here</div>
-      <p class="skill-note-text ${note ? '' : 'skill-note-empty'}" dir="auto">${note ? note.replace(/</g,'&lt;') : 'Not set yet — add what you want to work on during this window.'}</p>
-      <button class="edit-link-btn" id="editNoteBtn">✎ ${note ? 'Edit note' : 'Add note'}</button>
-    `;
-    card.appendChild(wrap);
-    document.getElementById('editNoteBtn').addEventListener('click', ()=>{ editingNoteStep = s.id; render(); });
-    return;
-  }
-
   wrap.innerHTML = `
     <div class="skill-note-label">Skill I'm improving here</div>
-    <textarea class="skill-note-input" id="noteInput" rows="3" dir="auto" placeholder="e.g. Reading more fluently, staying informed without doomscrolling, tracking weight consistently...">${note.replace(/</g,'&lt;')}</textarea>
-    <div class="edit-row">
-      <button class="edit-link-btn" id="saveNoteBtn">Save note</button>
-      <button class="edit-link-btn" id="cancelNoteBtn">Cancel</button>
-    </div>
+    <p class="skill-note-text ${note ? '' : 'skill-note-empty'}" dir="auto">${note ? note.replace(/</g,'&lt;') : 'Not set yet — edit this window to add one.'}</p>
   `;
   card.appendChild(wrap);
-  document.getElementById('saveNoteBtn').addEventListener('click', async ()=>{
-    const val = document.getElementById('noteInput').value.trim();
-    if (val) skillNotes[s.id] = val; else delete skillNotes[s.id];
-    await saveSkillNotes();
-    editingNoteStep = null;
-    render();
-  });
-  document.getElementById('cancelNoteBtn').addEventListener('click', ()=>{
-    editingNoteStep = null;
-    render();
-  });
 }
 
 // ---------- weight detail ----------
@@ -1249,13 +1225,17 @@ function renderLinkStep(s){
     ${links.length ? `<div class="link-list">
       ${links.map((l,i) => {
         const checked = !!linkState[i];
+        const hasUrl = !!(l.url && l.url.trim());
+        const item = hasUrl
+          ? `<a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="btn-arrow">↗</span></a>`
+          : `<div class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn link-no-url">${l.label}</div>`;
         return `
         <div class="link-row">
-          <a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="btn-arrow">↗</span></a>
+          ${item}
           <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark link incomplete':'Mark link complete'}">${checked?CHECK_SVG_SM:''}</button>
         </div>`;
       }).join('')}
-    </div>` : '<p class="skill-note-empty" style="margin-top:6px;">No link set for this window yet.</p>'}
+    </div>` : ''}
   `;
   card.querySelectorAll('.link-check').forEach(btn=>{
     btn.addEventListener('click', ()=> toggleLinkComplete(s.id, parseInt(btn.dataset.idx, 10)));
@@ -1306,6 +1286,8 @@ function captureEditDraftFromInputs(){
   const startInput = document.getElementById('editStart');
   if (intervalInput) editDraft.interval = parseInt(intervalInput.value, 10) || 1;
   if (startInput) editDraft.startOption = startInput.value;
+  const noteInput = document.getElementById('editNoteInput');
+  if (noteInput) editDraft.note = noteInput.value;
   const rows = card.querySelectorAll('.link-edit-row');
   const links = [];
   rows.forEach(row=>{
@@ -1345,6 +1327,10 @@ function renderWindowEditor(s){
         <input type="text" class="edit-input" dir="auto" id="editSubInput" value="${editDraft.sub.replace(/"/g,'&quot;')}">
       </div>
       ${renderScheduleHTML('edit', editDraft.interval, editDraft.startOption)}
+      <div class="edit-field">
+        <label>Skill I'm improving here (optional)</label>
+        <textarea class="skill-note-input" id="editNoteInput" rows="3" dir="auto" placeholder="e.g. Reading more fluently, staying informed without doomscrolling, tracking weight consistently...">${editDraft.note.replace(/</g,'&lt;')}</textarea>
+      </div>
     </div>
     <div class="edit-field" style="margin-bottom:10px;">
       <label>Links (optional — add as many as you like)</label>
@@ -1380,9 +1366,12 @@ function renderWindowEditor(s){
       return;
     }
     const finalLinks = editDraft.links
-      .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }))
-      .filter(l => l.url);
+      .filter(l => (l.url||'').trim() || (l.label||'').trim())
+      .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }));
     const schedule = computeSchedule(editDraft.interval, editDraft.startOption);
+    const noteVal = editDraft.note.trim();
+    if (noteVal) skillNotes[s.id] = noteVal; else delete skillNotes[s.id];
+    await saveSkillNotes();
     const idx = STEPS.findIndex(x => x.id === s.id);
     if (idx !== -1){
       STEPS[idx] = { ...STEPS[idx], title, sub: editDraft.sub.trim(), links: finalLinks, schedule };
@@ -1554,8 +1543,8 @@ function renderAddForm(){
       return;
     }
     const finalLinks = addDraft.links
-      .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }))
-      .filter(l => l.url);
+      .filter(l => (l.url||'').trim() || (l.label||'').trim())
+      .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }));
     const schedule = computeSchedule(addDraft.interval, addDraft.startOption);
     const newStep = { id: slugify(title), iconKey: 'custom', title, sub: addDraft.sub.trim(), links: finalLinks, schedule };
     STEPS.push(newStep);
@@ -1680,7 +1669,8 @@ function renderOuterActions(){
       title: s.title, sub: s.sub || '',
       links: (s.links || []).map(l => ({...l})),
       interval: (s.schedule && s.schedule.interval) || 1,
-      startOption: 'today'
+      startOption: 'today',
+      note: skillNotes[s.id] || ''
     };
     render();
   });
