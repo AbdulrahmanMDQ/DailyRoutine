@@ -519,21 +519,21 @@
   .todo-row{
     display:flex;
     align-items:center;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid #ece7d9;
-    border-radius: 12px;
-    background: #fffefc;
+    gap: 8px;
   }
-  .todo-color-dot{
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink:0;
+  .todo-pill{
+    flex:1;
+    padding: 15px 18px;
+    border-radius: 12px;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14.5px;
+    text-align: center;
   }
   .todo-check{
     flex-shrink:0;
-    width: 26px; height: 26px;
-    border-radius: 50%;
+    width: 38px; height: 38px;
+    border-radius: 10px;
     border: 1.5px solid #d8d0b8;
     background: #fff;
     display:flex; align-items:center; justify-content:center;
@@ -542,20 +542,9 @@
     padding:0;
   }
   .todo-check.checked{ background: var(--sage); border-color: var(--sage); }
-  .todo-text{
-    flex:1;
-    font-size: 14px;
-    color: var(--ink);
-    text-align: left;
-  }
-  .todo-row-done{
-    background: #faf8f2;
-    box-shadow: inset 0 1px 3px rgba(36,31,61,0.08);
-    opacity: 0.75;
-  }
-  .todo-row-done .todo-text{
+  .todo-row-done .todo-pill{
+    opacity: 0.55;
     text-decoration: line-through;
-    color: var(--ink-soft);
   }
   .todo-delete{
     flex-shrink:0;
@@ -1607,7 +1596,13 @@ function renderDetailNav(s){
     <button id="completeBtn" class="next-main ${prog.isFull ? 'complete-done' : ''}">${label}</button>
   `;
   card.appendChild(nav);
-  document.getElementById('backToGridBtn').addEventListener('click', ()=>{ view = 'grid'; activeId = null; render(); });
+  document.getElementById('backToGridBtn').addEventListener('click', ()=>{
+    view = 'grid';
+    activeId = null;
+    removeConfirmStep = null;
+    editingWindow = null;
+    render();
+  });
   document.getElementById('completeBtn').addEventListener('click', ()=> toggleComplete(s.id));
 }
 
@@ -1622,7 +1617,7 @@ function renderGrid(){
       <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No windows yet — add the first one below.")}</p>
     </div>
     <div class="win-grid">
-      ${dueSteps.length ? '<div class="grid-divider"><span>Developed Skills</span></div>' : ''}
+      ${dueSteps.length ? '<div class="grid-divider"><span>Daily Skills</span></div>' : ''}
       ${dueSteps.map(s => {
         const prog = stepProgress(s);
         const pct = Math.round(prog.ratio * 100);
@@ -1637,7 +1632,7 @@ function renderGrid(){
           <div class="win-title">${s.title}</div>
         </div>`;
       }).join('')}
-      ${(dueSteps.length && todoLists.length) ? '<div class="grid-divider"><span>To-Do Lists</span></div>' : ''}
+      ${(dueSteps.length && todoLists.length) ? '<div class="grid-divider"><span>Tasks / Ideas</span></div>' : ''}
       ${todoLists.map(list => {
         const pendingCount = todos.filter(t => t.listId === list.id && !t.done).length;
         return `
@@ -1840,9 +1835,8 @@ function renderProgressNav(){
 function renderTodoRow(t){
   return `
     <div class="todo-row ${t.done?'todo-row-done':''}">
-      <span class="todo-color-dot" style="background:${t.color}"></span>
+      <div class="todo-pill" style="background: color-mix(in srgb, ${t.color} 20%, #fffefc); border: 1px solid color-mix(in srgb, ${t.color} 45%, #ece7d9);" dir="auto">${(t.text||'').replace(/</g,'&lt;')}</div>
       <button class="todo-check ${t.done?'checked':''}" data-id="${t.id}" aria-label="${t.done?'Mark not done':'Mark done'}">${t.done?CHECK_SVG_SM:''}</button>
-      <span class="todo-text" dir="auto">${(t.text||'').replace(/</g,'&lt;')}</span>
       <button class="todo-delete" data-id="${t.id}" aria-label="Delete task">✕</button>
     </div>
   `;
@@ -1924,7 +1918,13 @@ function renderTodoNav(){
     <button id="doneTodoBtn" class="next-main">Done →</button>
   `;
   card.appendChild(nav);
-  document.getElementById('doneTodoBtn').addEventListener('click', ()=>{ view = 'grid'; activeTodoListId = null; render(); });
+  document.getElementById('doneTodoBtn').addEventListener('click', ()=>{
+    view = 'grid';
+    activeTodoListId = null;
+    editingTodoListTitle = null;
+    removeConfirmTodoList = null;
+    render();
+  });
 }
 function renderAddTodoListForm(){
   card.innerHTML = `
