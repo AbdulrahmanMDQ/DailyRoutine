@@ -21,6 +21,8 @@
     --ink-soft: #6b6580;
     --sage: #6B9080;
     --gold: #D4A574;
+    --violet: #8B7BC9;
+    --sunflower: #E8B93F;
     --card: #FFFDF9;
     --t: 0;
     --radius: 22px;
@@ -391,6 +393,25 @@
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 10px;
   }
+  .grid-divider{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin: 6px 0 2px;
+    color: var(--ink-soft);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .grid-divider::before,
+  .grid-divider::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background: #e4dfd2;
+  }
   .win-card{
     position:relative;
     background:#fffefc;
@@ -451,6 +472,108 @@
     font-weight: 700;
     color: var(--ink-soft);
     font-family:'Inter', sans-serif;
+  }
+
+  .win-card.todo-tile{
+    background: color-mix(in srgb, var(--sunflower) 18%, #fffefc);
+    border-color: color-mix(in srgb, var(--sunflower) 55%, #ece7d9);
+  }
+  .win-card.todo-tile .icon{ stroke: color-mix(in srgb, var(--sunflower) 75%, var(--ink)); }
+  .todo-count-badge{
+    position:absolute;
+    top: 8px; right: 8px;
+    z-index: 2;
+    min-width: 20px; height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--sunflower);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    font-family:'Inter', sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .todo-color-row{
+    display:flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .todo-swatch{
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .todo-swatch.selected{
+    border-color: var(--ink);
+    box-shadow: 0 0 0 2px #fff inset;
+  }
+  .todo-list{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .todo-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #ece7d9;
+    border-radius: 12px;
+    background: #fffefc;
+  }
+  .todo-color-dot{
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink:0;
+  }
+  .todo-check{
+    flex-shrink:0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid #d8d0b8;
+    background: #fff;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    cursor:pointer;
+    padding:0;
+  }
+  .todo-check.checked{ background: var(--sage); border-color: var(--sage); }
+  .todo-text{
+    flex:1;
+    font-size: 14px;
+    color: var(--ink);
+    text-align: left;
+  }
+  .todo-row-done{
+    background: #faf8f2;
+    box-shadow: inset 0 1px 3px rgba(36,31,61,0.08);
+    opacity: 0.75;
+  }
+  .todo-row-done .todo-text{
+    text-decoration: line-through;
+    color: var(--ink-soft);
+  }
+  .todo-delete{
+    flex-shrink:0;
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    border: 1px solid #ecd3cb;
+    background: #fff;
+    color: #c0604a;
+    cursor: pointer;
+    font-size: 12px;
+    padding:0;
+  }
+  .todo-section-label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    margin: 4px 0 10px;
   }
 
   .link-list{
@@ -795,7 +918,8 @@ const ICONS = {
   ghost: `<svg class="icon" viewBox="0 0 44 44"><path d="M10 34V20a12 12 0 0 1 24 0v14l-4-3-4 3-4-3-4 3-4-3z"/><circle cx="17" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="27" cy="20" r="1.4" fill="currentColor" stroke="none"/></svg>`,
   custom: `<svg class="icon" viewBox="0 0 44 44"><rect x="7" y="7" width="30" height="30" rx="8"/><path d="M22 15v14M15 22h14"/></svg>`,
   chat: `<svg class="icon" viewBox="0 0 44 44"><path d="M7 12h30v18H18l-7 6v-6H7z"/><path d="M14 19h16M14 24h11"/></svg>`,
-  chart: `<svg class="icon" viewBox="0 0 44 44"><path d="M7 37V7M7 37h30"/><rect x="13" y="24" width="6" height="9"/><rect x="22" y="17" width="6" height="16"/><rect x="31" y="12" width="6" height="21"/></svg>`
+  chart: `<svg class="icon" viewBox="0 0 44 44"><path d="M7 37V7M7 37h30"/><rect x="13" y="24" width="6" height="9"/><rect x="22" y="17" width="6" height="16"/><rect x="31" y="12" width="6" height="21"/></svg>`,
+  todo: `<svg class="icon" viewBox="0 0 44 44"><rect x="7" y="6" width="30" height="32" rx="4"/><path d="M13 15l2.5 2.5L20 13"/><path d="M24 15h9"/><path d="M13 24l2.5 2.5L20 22"/><path d="M24 24h9"/><path d="M13 33h9"/></svg>`
 };
 
 function iconFor(s){ return ICONS[s.iconKey] || ICONS.custom; }
@@ -890,7 +1014,7 @@ const DEFAULT_NOTES = {
 };
 
 let STEPS = [];
-let view = 'grid'; // 'grid' | 'detail' | 'manage' | 'add' | 'progress'
+let view = 'grid'; // 'grid' | 'detail' | 'manage' | 'add' | 'progress' | 'todo'
 let activeId = null;
 let unit = 'kg';
 let skillNotes = {};
@@ -901,6 +1025,21 @@ let addDraft = null;      // { title, sub, links: [{label,url}] } for the add-wi
 let completions = { day: '', done: {} };
 let history = {}; // { 'YYYY-MM-DD': { stepId: true, ... } }
 let progressPeriod = 'week';
+let todos = []; // [{ id, listId, text, color, done }] — one-off tasks, separate from habit windows
+let todoLists = []; // [{ id, title }] — one or more named to-do lists
+let activeTodoListId = null;
+let todoSelectedColor = null;
+let removeConfirmTodoList = null;
+let editingTodoListTitle = null;
+
+const TODO_COLORS = [
+  { key:'coral', hex:'#FF7A59' },
+  { key:'amber', hex:'#F4A259' },
+  { key:'sage',  hex:'#6B9080' },
+  { key:'sky',   hex:'#5B8DBE' },
+  { key:'violet',hex:'#8B7BC9' },
+  { key:'rose',  hex:'#D97A93' }
+];
 
 const card = document.getElementById('card');
 const stepLabel = document.getElementById('stepLabel');
@@ -914,7 +1053,7 @@ async function loadSteps(){
     const res = await window.storage.get('routine-steps', false);
     if (res && res.value){
       const parsed = JSON.parse(res.value);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
+      if (Array.isArray(parsed)) return parsed; // trust the saved state, even if the user emptied it
     }
   }catch(e){}
   return DEFAULT_STEPS.map(s => ({...s, links: s.links ? s.links.map(l=>({...l})) : undefined}));
@@ -954,7 +1093,7 @@ async function saveHistory(){
   try{ await window.storage.set('completion-history', JSON.stringify(history), false); }
   catch(e){ console.error('storage error', e); }
 }
-const BACKUP_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'weight-entries'];
+const BACKUP_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'weight-entries', 'todo-list', 'todo-lists'];
 
 async function exportBackup(){
   const data = {};
@@ -989,6 +1128,9 @@ async function importBackup(file){
     skillNotes = await loadSkillNotes();
     completions = await loadCompletions();
     history = await loadHistory();
+    todos = await loadTodos();
+    const loadedLists = await loadTodoLists();
+    if (loadedLists) todoLists = loadedLists;
     view = 'grid';
     render();
   }catch(e){
@@ -1005,6 +1147,71 @@ async function loadWeights(){
 async function saveWeights(entries){
   try{ await window.storage.set('weight-entries', JSON.stringify(entries), false); }
   catch(e){ console.error('storage error', e); }
+}
+
+async function loadTodos(){
+  try{
+    const res = await window.storage.get('todo-list', false);
+    return res ? JSON.parse(res.value) : [];
+  }catch(e){ return []; }
+}
+async function saveTodos(){
+  try{ await window.storage.set('todo-list', JSON.stringify(todos), false); }
+  catch(e){ console.error('storage error', e); }
+}
+async function loadTodoLists(){
+  try{
+    const res = await window.storage.get('todo-lists', false);
+    if (res && res.value){
+      const parsed = JSON.parse(res.value);
+      if (Array.isArray(parsed)) return parsed; // trust the saved state, even if the user emptied it
+    }
+  }catch(e){}
+  return null; // signals "not yet initialized" (truly first run)
+}
+async function saveTodoLists(){
+  try{ await window.storage.set('todo-lists', JSON.stringify(todoLists), false); }
+  catch(e){ console.error('storage error', e); }
+}
+async function addTodo(text, color, listId){
+  const id = 'todo-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  todos.push({ id, listId, text, color, done: false });
+  await saveTodos();
+  render();
+}
+async function toggleTodoDone(id){
+  const t = todos.find(x => x.id === id);
+  if (t) t.done = !t.done;
+  await saveTodos();
+  render();
+}
+async function deleteTodo(id){
+  todos = todos.filter(x => x.id !== id);
+  await saveTodos();
+  render();
+}
+async function addTodoList(title){
+  const id = 'todo-list-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  todoLists.push({ id, title });
+  await saveTodoLists();
+  view = 'grid';
+  render();
+}
+async function removeTodoList(id){
+  todoLists = todoLists.filter(l => l.id !== id);
+  todos = todos.filter(t => t.listId !== id);
+  await saveTodoLists();
+  await saveTodos();
+  removeConfirmTodoList = null;
+  if (activeTodoListId === id){ activeTodoListId = null; view = 'grid'; }
+  render();
+}
+async function renameTodoList(id, newTitle){
+  const list = todoLists.find(l => l.id === id);
+  if (list && newTitle.trim()) list.title = newTitle.trim();
+  await saveTodoLists();
+  editingTodoListTitle = null;
+  render();
 }
 
 function todayKey(){
@@ -1415,6 +1622,7 @@ function renderGrid(){
       <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No windows yet — add the first one below.")}</p>
     </div>
     <div class="win-grid">
+      ${dueSteps.length ? '<div class="grid-divider"><span>Developed Skills</span></div>' : ''}
       ${dueSteps.map(s => {
         const prog = stepProgress(s);
         const pct = Math.round(prog.ratio * 100);
@@ -1429,13 +1637,26 @@ function renderGrid(){
           <div class="win-title">${s.title}</div>
         </div>`;
       }).join('')}
+      ${(dueSteps.length && todoLists.length) ? '<div class="grid-divider"><span>To-Do Lists</span></div>' : ''}
+      ${todoLists.map(list => {
+        const pendingCount = todos.filter(t => t.listId === list.id && !t.done).length;
+        return `
+        <div class="win-card todo-tile" data-todo-id="${list.id}">
+          ${pendingCount ? `<div class="todo-count-badge">${pendingCount}</div>` : ''}
+          <div class="win-icon">${ICONS.todo}</div>
+          <div class="win-title">${list.title}</div>
+        </div>`;
+      }).join('')}
     </div>
   `;
-  card.querySelectorAll('.win-card').forEach(el=>{
+  card.querySelectorAll('.win-card[data-id]').forEach(el=>{
     el.addEventListener('click', ()=>{ view = 'detail'; activeId = el.dataset.id; render(); });
   });
   card.querySelectorAll('.win-check').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(btn.dataset.id); });
+  });
+  card.querySelectorAll('.todo-tile').forEach(el=>{
+    el.addEventListener('click', ()=>{ view = 'todo'; activeTodoListId = el.dataset.todoId; render(); });
   });
 }
 
@@ -1498,7 +1719,7 @@ function captureAddDraftFromInputs(){
 function renderAddForm(){
   if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:''}], interval:1, startOption:'today' };
   card.innerHTML = `
-    <h1 style="font-size:26px;">Add a window</h1>
+    <h1 style="font-size:26px;">Add a skill</h1>
     <div class="edit-fields">
       <div class="edit-field">
         <label>Title</label>
@@ -1615,13 +1836,134 @@ function renderProgressNav(){
   document.getElementById('doneProgressBtn').addEventListener('click', ()=>{ view = 'grid'; render(); });
 }
 
+// ---------- to-do list (separate from habit windows — no schedule, no reset) ----------
+function renderTodoRow(t){
+  return `
+    <div class="todo-row ${t.done?'todo-row-done':''}">
+      <span class="todo-color-dot" style="background:${t.color}"></span>
+      <button class="todo-check ${t.done?'checked':''}" data-id="${t.id}" aria-label="${t.done?'Mark not done':'Mark done'}">${t.done?CHECK_SVG_SM:''}</button>
+      <span class="todo-text" dir="auto">${(t.text||'').replace(/</g,'&lt;')}</span>
+      <button class="todo-delete" data-id="${t.id}" aria-label="Delete task">✕</button>
+    </div>
+  `;
+}
+function renderTodoScreen(){
+  const list = todoLists.find(l => l.id === activeTodoListId);
+  if (!list){ view = 'grid'; activeTodoListId = null; return; }
+  if (!todoSelectedColor) todoSelectedColor = TODO_COLORS[0].hex;
+  const listTodos = todos.filter(t => t.listId === activeTodoListId);
+  const pending = listTodos.filter(t => !t.done);
+  const done = listTodos.filter(t => t.done);
+
+  if (editingTodoListTitle === list.id){
+    card.innerHTML = `
+      ${ICONS.todo}
+      <h1 style="font-size:22px;">Rename this list</h1>
+      <div class="edit-fields">
+        <div class="edit-field">
+          <label>Title</label>
+          <input type="text" class="edit-input" dir="auto" id="todoListTitleInput" value="${list.title.replace(/"/g,'&quot;')}">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="saveTodoListTitleBtn">Save</button>
+        <button class="btn btn-secondary" id="cancelTodoListTitleBtn">Cancel</button>
+      </div>
+    `;
+    document.getElementById('saveTodoListTitleBtn').addEventListener('click', ()=>{
+      const val = document.getElementById('todoListTitleInput').value;
+      renameTodoList(list.id, val);
+    });
+    document.getElementById('cancelTodoListTitleBtn').addEventListener('click', ()=>{
+      editingTodoListTitle = null;
+      render();
+    });
+    return;
+  }
+
+  card.innerHTML = `
+    ${ICONS.todo}
+    <h1 style="font-size:26px;">${list.title.replace(/</g,'&lt;')}</h1>
+    <p class="sub">Random one-off tasks — not tied to any schedule.</p>
+    ${!listTodos.length ? '<p class="skill-note-empty">No tasks yet.</p>' : ''}
+    ${pending.length ? `<div class="todo-list">${pending.map(renderTodoRow).join('')}</div>` : ''}
+    ${done.length ? `<div class="todo-section-label">Completed</div><div class="todo-list">${done.map(renderTodoRow).join('')}</div>` : ''}
+    <div class="edit-field" style="margin-top:6px;">
+      <input type="text" class="edit-input" dir="auto" id="todoTextInput" placeholder="Add a task...">
+    </div>
+    <div class="todo-color-row">
+      ${TODO_COLORS.map(c => `<button class="todo-swatch ${c.hex===todoSelectedColor?'selected':''}" data-color="${c.hex}" style="background:${c.hex}" aria-label="${c.key}"></button>`).join('')}
+    </div>
+    <button class="btn btn-primary" id="addTodoBtn">+ Add task</button>
+  `;
+  card.querySelectorAll('.todo-swatch').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ todoSelectedColor = btn.dataset.color; renderTodoScreen(); });
+  });
+  wireTodoScreen();
+}
+function wireTodoScreen(){
+  const addBtn = document.getElementById('addTodoBtn');
+  if (addBtn) addBtn.addEventListener('click', async ()=>{
+    const input = document.getElementById('todoTextInput');
+    const text = input.value.trim();
+    if (!text) return;
+    await addTodo(text, todoSelectedColor, activeTodoListId);
+  });
+  card.querySelectorAll('.todo-check').forEach(btn=>{
+    btn.addEventListener('click', ()=> toggleTodoDone(btn.dataset.id));
+  });
+  card.querySelectorAll('.todo-delete').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteTodo(btn.dataset.id));
+  });
+}
+function renderTodoNav(){
+  const nav = document.createElement('div');
+  nav.className = 'nav';
+  nav.innerHTML = `
+    <button class="back-main" disabled>← Back</button>
+    <button id="doneTodoBtn" class="next-main">Done →</button>
+  `;
+  card.appendChild(nav);
+  document.getElementById('doneTodoBtn').addEventListener('click', ()=>{ view = 'grid'; activeTodoListId = null; render(); });
+}
+function renderAddTodoListForm(){
+  card.innerHTML = `
+    ${ICONS.todo}
+    <h1 style="font-size:26px;">Add a to-do-list</h1>
+    <p class="sub">Give it a name — e.g. "Work," "Home," "Errands."</p>
+    <div class="edit-fields">
+      <div class="edit-field">
+        <label>Title</label>
+        <input type="text" class="edit-input" dir="auto" id="newTodoListTitle" placeholder="e.g. Groceries">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="confirmAddTodoListBtn">Add to-do-list</button>
+      <button class="btn btn-secondary" id="cancelAddTodoListBtn">Cancel</button>
+    </div>
+    <div class="save-msg" id="todoListErrMsg"></div>
+  `;
+  document.getElementById('confirmAddTodoListBtn').addEventListener('click', async ()=>{
+    const title = document.getElementById('newTodoListTitle').value.trim();
+    const err = document.getElementById('todoListErrMsg');
+    if (!title){
+      err.style.color = '#c0604a';
+      err.textContent = 'A title is needed.';
+      return;
+    }
+    await addTodoList(title);
+  });
+  document.getElementById('cancelAddTodoListBtn').addEventListener('click', ()=>{ view = 'grid'; render(); });
+}
+
 // ---------- outer toolbar ----------
 function renderOuterActions(){
   outerActions.innerHTML = '';
 
   if (view === 'grid'){
     outerActions.innerHTML = `
-      <button class="outer-btn" id="addWindowOuterBtn">+ Add a window</button>
+      <button class="outer-btn" id="addWindowOuterBtn">+ Add a skill</button>
+      <button class="outer-btn" id="addTodoListOuterBtn">+ Add a to-do-list</button>
       <button class="outer-btn" id="reorderOuterBtn">⇅ Reorder windows</button>
       <button class="outer-btn" id="progressOuterBtn">📈 Progress</button>
       <button class="outer-btn" id="backupOuterBtn">⬇ Backup</button>
@@ -1629,6 +1971,7 @@ function renderOuterActions(){
       <input type="file" id="restoreFileInput" accept="application/json" style="display:none">
     `;
     document.getElementById('addWindowOuterBtn').addEventListener('click', ()=>{ addDraft = null; view = 'add'; render(); });
+    document.getElementById('addTodoListOuterBtn').addEventListener('click', ()=>{ view = 'addTodoList'; render(); });
     document.getElementById('reorderOuterBtn').addEventListener('click', ()=>{ view = 'manage'; render(); });
     document.getElementById('progressOuterBtn').addEventListener('click', ()=>{ view = 'progress'; render(); });
     document.getElementById('backupOuterBtn').addEventListener('click', exportBackup);
@@ -1639,6 +1982,30 @@ function renderOuterActions(){
       const file = e.target.files[0];
       if (file) await importBackup(file);
     });
+    return;
+  }
+
+  if (view === 'todo'){
+    const list = todoLists.find(l => l.id === activeTodoListId);
+    if (!list || editingTodoListTitle === list.id) return;
+    if (removeConfirmTodoList === list.id){
+      outerActions.innerHTML = `
+        <div class="outer-confirm">
+          <span>Remove this to-do-list and its tasks?</span>
+          <button class="outer-btn danger" id="confirmRemoveTodoListBtn">Yes, remove</button>
+          <button class="outer-btn" id="cancelRemoveTodoListBtn">Cancel</button>
+        </div>
+      `;
+      document.getElementById('confirmRemoveTodoListBtn').addEventListener('click', ()=> removeTodoList(list.id));
+      document.getElementById('cancelRemoveTodoListBtn').addEventListener('click', ()=>{ removeConfirmTodoList = null; render(); });
+      return;
+    }
+    outerActions.innerHTML = `
+      <button class="outer-btn" id="editTodoListTitleBtn">✎ Edit list title</button>
+      <button class="outer-btn danger" id="removeTodoListBtn">✕ Remove this list</button>
+    `;
+    document.getElementById('editTodoListTitleBtn').addEventListener('click', ()=>{ editingTodoListTitle = list.id; render(); });
+    document.getElementById('removeTodoListBtn').addEventListener('click', ()=>{ removeConfirmTodoList = list.id; render(); });
     return;
   }
 
@@ -1698,8 +2065,25 @@ async function render(){
     return;
   }
 
+  if (view === 'todo'){
+    const list = todoLists.find(l => l.id === activeTodoListId);
+    if (!list){ view = 'grid'; activeTodoListId = null; return render(); }
+    stepLabel.textContent = list.title;
+    renderTodoScreen();
+    renderTodoNav();
+    renderOuterActions();
+    return;
+  }
+
+  if (view === 'addTodoList'){
+    stepLabel.textContent = 'Add a to-do-list';
+    renderAddTodoListForm();
+    outerActions.innerHTML = '';
+    return;
+  }
+
   if (view === 'add'){
-    stepLabel.textContent = 'Add a window';
+    stepLabel.textContent = 'Add a skill';
     renderAddForm();
     outerActions.innerHTML = '';
     return;
@@ -1737,6 +2121,22 @@ async function render(){
   skillNotes = await loadSkillNotes();
   completions = await loadCompletions();
   history = await loadHistory();
+  todos = await loadTodos();
+  const loadedLists = await loadTodoLists();
+  if (loadedLists){
+    todoLists = loadedLists;
+    // legacy todos saved before multi-list support won't have a listId — attach them to the first list
+    let needsSave = false;
+    todos.forEach(t => {
+      if (!t.listId){ t.listId = todoLists[0].id; needsSave = true; }
+    });
+    if (needsSave) await saveTodos();
+  } else {
+    todoLists = [{ id: 'todo-list-default', title: 'To-Do List' }];
+    todos = todos.map(t => t.listId ? t : { ...t, listId: 'todo-list-default' });
+    await saveTodoLists();
+    if (todos.length) await saveTodos();
+  }
   let notesChanged = false;
   STEPS.forEach(s => {
     if (!skillNotes[s.id] && DEFAULT_NOTES[s.id]){
