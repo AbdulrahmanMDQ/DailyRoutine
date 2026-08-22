@@ -479,6 +479,36 @@
     box-shadow: 0 6px 18px -14px rgba(23,23,45,0.25);
   }
   .win-card:hover{ transform: translateY(-2px); border-color: var(--border); }
+  .win-card{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; touch-action: manipulation; }
+  .win-card.grid-dragging{
+    box-shadow: 0 18px 34px -12px rgba(23,23,45,0.4);
+    border-color: var(--dawn);
+    opacity: 0.97;
+    cursor: grabbing;
+    transition: none;
+  }
+  .win-resize-handle{
+    position:absolute;
+    z-index:3;
+    right: 2px;
+    bottom: 2px;
+    width: 22px; height: 22px;
+    display:flex; align-items:center; justify-content:center;
+    background:none;
+    border:none;
+    padding:0;
+    cursor: ew-resize;
+    touch-action: none;
+    color: var(--ink-soft);
+    opacity: 0.45;
+  }
+  .win-resize-handle:hover{ opacity: 0.8; }
+  .win-resize-handle svg{ width:12px; height:12px; }
+  .win-card.resizing{
+    transition: none;
+    box-shadow: 0 14px 28px -12px rgba(23,23,45,0.35);
+    border-color: var(--dawn);
+  }
   .win-card.win-done{
     background: color-mix(in srgb, var(--sage) 10%, #fff);
     border-color: color-mix(in srgb, var(--sage) 40%, var(--border-soft));
@@ -665,6 +695,23 @@
     margin: 4px 0 10px;
   }
 
+  .link-drag{
+    flex-shrink:0;
+    width: 22px; height: 36px;
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-size: 16px;
+    cursor: grab;
+    touch-action: none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .link-row.dragging{
+    z-index: 5;
+    box-shadow: 0 10px 22px -10px rgba(23,23,45,0.35);
+    background: var(--bg);
+    border-radius: 12px;
+  }
   .link-list{
     display:flex;
     flex-direction:column;
@@ -1385,7 +1432,7 @@ function ensureToday(){
 }
 
 // A window with no schedule is due every day.
-// New format: schedule.days = array of weekday numbers (1=Mon...6=Sat) it recurs on.
+// New format: schedule.days = array of weekday numbers (0=Sun,1=Mon...6=Sat) it recurs on.
 // Legacy format (interval/startDate) is still honored for windows not yet re-saved.
 function isDueToday(s){
   if (!s.schedule) return true;
@@ -1585,7 +1632,7 @@ function renderLinkStep(s){
     ${iconFor(s)}
     <h1>${s.title}</h1>
     ${s.sub ? `<p class="sub">${s.sub}</p>` : ''}
-    ${links.length ? `<div class="link-list">
+    ${links.length ? `<div class="link-list" id="linkListView">
       ${links.map((l,i) => {
         const checked = !!linkState[i];
         const hasUrl = !!(l.url && l.url.trim());
@@ -1593,7 +1640,8 @@ function renderLinkStep(s){
           ? `<a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="btn-arrow">↗</span></a>`
           : `<div class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn link-no-url">${l.label}</div>`;
         return `
-        <div class="link-row">
+        <div class="link-row" data-idx="${i}">
+          ${links.length > 1 ? `<button class="link-drag" aria-label="Drag to reorder">⠿</button>` : ''}
           ${item}
           <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark link incomplete':'Mark link complete'}">${checked?CHECK_SVG_SM:''}</button>
         </div>`;
@@ -1603,6 +1651,114 @@ function renderLinkStep(s){
   card.querySelectorAll('.link-check').forEach(btn=>{
     btn.addEventListener('click', ()=> toggleLinkComplete(s.id, parseInt(btn.dataset.idx, 10)));
   });
+  setupLinkDragReorder(s.id);
+}
+function setupLinkDragReorder(stepId){
+  const listEl = document.getElementById('linkListView');
+  if (!listEl) return;
+  listEl.querySelectorAll('.link-drag').forEach(handle=>{
+    handle.addEventListener('pointerdown', (e)=> beginLinkDrag(e, listEl, stepId));
+  });
+}
+function beginLinkDrag(e, listEl, stepId){
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const row = e.target.closest('.link-row');
+  if (!row) return;
+  e.preventDefault();
+
+  const rows = Array.from(listEl.children).filter(el=> el.classList.contains('link-row'));
+  if (rows.length < 2) return;
+  const listRect = listEl.getBoundingClientRect();
+  const rects = rows.map(r=> r.getBoundingClientRect());
+  const GAP = 10;
+
+  listEl.style.height = listRect.height + 'px';
+  rows.forEach((r,i)=>{
+    r.style.position = 'absolute';
+    r.style.left = '0';
+    r.style.right = '0';
+    r.style.top = (rects[i].top - listRect.top) + 'px';
+    r.style.transition = 'top 0.18s ease';
+    r.style.width = '100%';
+  });
+  listEl.style.position = 'relative';
+
+  const startIndex = rows.indexOf(row);
+  row.style.transition = 'none';
+  row.style.zIndex = 5;
+  row.classList.add('dragging');
+
+  let order = rows.map(r=> r.dataset.idx);
+  const heightOf = idx => rects[rows.findIndex(r=> r.dataset.idx === idx)].height;
+  const startY = e.clientY;
+  const rowStartTop = rects[startIndex].top - listRect.top;
+
+  function topsFromOrder(){
+    const tops = {};
+    let c = 0;
+    order.forEach(idx=>{ tops[idx] = c; c += heightOf(idx) + GAP; });
+    return tops;
+  }
+
+  function onMove(ev){
+    const dy = ev.clientY - startY;
+    const newTop = rowStartTop + dy;
+    row.style.top = newTop + 'px';
+    const rowCenter = newTop + rects[startIndex].height / 2;
+
+    const fromIdx = order.indexOf(row.dataset.idx);
+    const tops = topsFromOrder();
+    let targetIdx = fromIdx;
+    for (let i = 0; i < order.length; i++){
+      if (order[i] === row.dataset.idx) continue;
+      const mid = tops[order[i]] + heightOf(order[i]) / 2;
+      if (i < fromIdx && rowCenter < mid){ targetIdx = i; break; }
+      if (i > fromIdx && rowCenter > mid){ targetIdx = i; }
+    }
+    if (targetIdx !== fromIdx){
+      order.splice(fromIdx, 1);
+      order.splice(targetIdx, 0, row.dataset.idx);
+      const newTops = topsFromOrder();
+      order.forEach(idx=>{
+        if (idx === row.dataset.idx) return;
+        const r = rows.find(rr=> rr.dataset.idx === idx);
+        r.style.top = newTops[idx] + 'px';
+      });
+    }
+  }
+
+  function onUp(){
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    row.classList.remove('dragging');
+    row.style.zIndex = '';
+    const tops = topsFromOrder();
+    row.style.transition = 'top 0.18s ease';
+    row.style.top = tops[row.dataset.idx] + 'px';
+    setTimeout(async ()=>{
+      const oldIndices = order.map(idx => parseInt(idx, 10));
+      await reorderStepLinks(stepId, oldIndices);
+      render();
+    }, 180);
+  }
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp, { once: true });
+}
+async function reorderStepLinks(stepId, oldIndicesInNewOrder){
+  const step = STEPS.find(x=> x.id === stepId);
+  if (!step || !Array.isArray(step.links)) return;
+  const oldLinks = step.links;
+  const oldState = (completions.links && completions.links[stepId]) || {};
+  step.links = oldIndicesInNewOrder.map(i => oldLinks[i]);
+  const newState = {};
+  oldIndicesInNewOrder.forEach((oldIdx, newIdx)=>{
+    if (oldState[oldIdx]) newState[newIdx] = true;
+  });
+  if (!completions.links) completions.links = {};
+  completions.links[stepId] = newState;
+  await saveSteps();
+  await saveCompletions();
 }
 
 // ---------- unified window editor (title, description, dynamic optional links) ----------
@@ -1612,7 +1768,8 @@ const WEEKDAY_BLOCKS = [
   { day: 3, label: 'Wed' },
   { day: 4, label: 'Thu' },
   { day: 5, label: 'Fri' },
-  { day: 6, label: 'Sat' }
+  { day: 6, label: 'Sat' },
+  { day: 0, label: 'Sun' }
 ];
 function renderScheduleHTML(idPrefix, selectedDays){
   return `
@@ -1638,12 +1795,12 @@ function wireWeekdayBlocks(idPrefix, draftRef){
 }
 function scheduleToDays(schedule){
   if (schedule && Array.isArray(schedule.days)) return schedule.days.slice();
-  return [1,2,3,4,5,6]; // no schedule (or legacy schedule) defaults to shown as "every day"
+  return [0,1,2,3,4,5,6]; // no schedule (or legacy schedule) defaults to shown as "every day"
 }
 function computeScheduleFromDays(days){
   const sorted = [...new Set(days)].sort((a,b)=>a-b);
-  const isEveryDay = sorted.length === 6 && WEEKDAY_BLOCKS.every(w => sorted.includes(w.day));
-  if (isEveryDay) return null; // unrestricted — due every day, including Sunday
+  const isEveryDay = sorted.length === 7 && WEEKDAY_BLOCKS.every(w => sorted.includes(w.day));
+  if (isEveryDay) return null; // unrestricted — due every day
   return { days: sorted };
 }
 
@@ -1755,6 +1912,20 @@ function renderWindowEditor(s){
     render();
   });
 }
+function renderWindowEditorNav(){
+  const nav = document.createElement('div');
+  nav.className = 'nav';
+  nav.innerHTML = `
+    <button class="back-main" id="backToOverviewFromEditBtn">← Overview</button>
+  `;
+  card.appendChild(nav);
+  document.getElementById('backToOverviewFromEditBtn').addEventListener('click', ()=>{
+    editingWindow = null;
+    editDraft = null;
+    view = 'grid';
+    render();
+  });
+}
 
 function renderDetailNav(s){
   const prog = stepProgress(s);
@@ -1779,6 +1950,7 @@ function renderDetailNav(s){
 }
 
 // ---------- grid (overview) ----------
+const RESIZE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 5l4 4M9 5L5 9M15 19l4-4M9 19l-4-4"/></svg>';
 function renderGrid(){
   ensureToday();
   const dueSteps = STEPS.filter(isDueToday);
@@ -1788,7 +1960,7 @@ function renderGrid(){
       <h1>Good morning.</h1>
       <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No windows yet — add the first one below.")}</p>
     </div>
-    <div class="win-grid">
+    <div class="win-grid" id="winGrid">
       ${dueSteps.length ? '<div class="grid-divider"><span>Daily Skills</span></div>' : ''}
       ${dueSteps.map(s => {
         const prog = stepProgress(s);
@@ -1796,36 +1968,238 @@ function renderGrid(){
         const badge = prog.isFull
           ? CHECK_SVG_SM
           : (prog.hasLinks && prog.checked > 0 ? `<span class="win-check-frac">${prog.checked}/${prog.total}</span>` : '');
+        const span = Math.max(1, s.widgetSpan || 1);
         return `
-        <div class="win-card ${prog.isFull ? 'win-done' : ''}" data-id="${s.id}">
+        <div class="win-card ${prog.isFull ? 'win-done' : ''}" data-id="${s.id}" data-span="${span}" style="grid-column: span ${span};">
           <div class="win-fill" style="height:${pct}%"></div>
           <button class="win-check ${prog.isFull ? 'checked' : ''}" data-id="${s.id}" aria-label="${prog.isFull ? 'Mark incomplete' : 'Mark complete'}">${badge}</button>
           <div class="win-icon">${iconFor(s)}</div>
           <div class="win-title">${s.title}</div>
+          <button class="win-resize-handle" aria-label="Drag to resize">${RESIZE_ICON}</button>
         </div>`;
       }).join('')}
       ${(dueSteps.length && todoLists.length) ? '<div class="grid-divider"><span>Tasks / Ideas</span></div>' : ''}
       ${todoLists.map(list => {
         const pendingCount = todos.filter(t => t.listId === list.id && !t.done).length;
         const c = listColorOf(list);
+        const span = Math.max(1, list.widgetSpan || 1);
         return `
-        <div class="win-card todo-tile" data-todo-id="${list.id}" style="background: color-mix(in srgb, ${c} 14%, #fff); border-color: color-mix(in srgb, ${c} 42%, rgba(17,17,26,0.08));">
+        <div class="win-card todo-tile" data-todo-id="${list.id}" data-span="${span}" style="grid-column: span ${span}; background: color-mix(in srgb, ${c} 14%, #fff); border-color: color-mix(in srgb, ${c} 42%, rgba(17,17,26,0.08));">
           ${pendingCount ? `<div class="todo-count-badge" style="background:${c};">${pendingCount}</div>` : ''}
           <div class="win-icon">${todoIconWithColor(c)}</div>
           <div class="win-title">${list.title}</div>
+          <button class="win-resize-handle" aria-label="Drag to resize">${RESIZE_ICON}</button>
         </div>`;
       }).join('')}
     </div>
   `;
   card.querySelectorAll('.win-card[data-id]').forEach(el=>{
-    el.addEventListener('click', ()=>{ view = 'detail'; activeId = el.dataset.id; render(); });
+    el.addEventListener('click', ()=>{
+      if (justDraggedGrid) return;
+      view = 'detail'; activeId = el.dataset.id; render();
+    });
   });
   card.querySelectorAll('.win-check').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(btn.dataset.id); });
   });
   card.querySelectorAll('.todo-tile').forEach(el=>{
-    el.addEventListener('click', ()=>{ view = 'todo'; activeTodoListId = el.dataset.todoId; render(); });
+    el.addEventListener('click', ()=>{
+      if (justDraggedGrid) return;
+      view = 'todo'; activeTodoListId = el.dataset.todoId; render();
+    });
   });
+  setupGridReorder();
+  setupTileResize();
+}
+
+// ---------- inline tile resize (drag corner handle to widen 1x/2x/3x) ----------
+const MAX_TILE_SPAN = 3;
+function gridColumnCount(grid){
+  const styles = getComputedStyle(grid);
+  const cols = styles.gridTemplateColumns.split(' ').filter(Boolean).length;
+  return Math.max(1, cols);
+}
+function setupTileResize(){
+  const grid = card.querySelector('.win-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.win-resize-handle').forEach(handle=>{
+    handle.addEventListener('pointerdown', (e)=> beginTileResize(e, handle, grid));
+  });
+}
+function beginTileResize(e, handle, grid){
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const el = handle.closest('.win-card');
+  if (!el) return;
+  const kind = el.hasAttribute('data-id') ? 'step' : 'todoList';
+  const id = kind === 'step' ? el.dataset.id : el.dataset.todoId;
+  const startSpan = parseInt(el.dataset.span, 10) || 1;
+  const startX = e.clientX;
+  const startWidth = el.getBoundingClientRect().width;
+  const gap = 10;
+  const tileUnit = (startWidth / startSpan) + gap;
+  const maxCols = gridColumnCount(grid);
+  const cap = Math.min(MAX_TILE_SPAN, maxCols);
+
+  el.classList.add('resizing');
+  if (navigator.vibrate) navigator.vibrate(8);
+
+  let currentSpan = startSpan;
+
+  function onMove(ev){
+    const dx = ev.clientX - startX;
+    const deltaSpan = Math.round(dx / tileUnit);
+    const newSpan = Math.min(cap, Math.max(1, startSpan + deltaSpan));
+    if (newSpan !== currentSpan){
+      currentSpan = newSpan;
+      el.style.gridColumn = `span ${currentSpan}`;
+      if (navigator.vibrate) navigator.vibrate(6);
+    }
+  }
+  function onUp(){
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    el.classList.remove('resizing');
+    el.dataset.span = String(currentSpan);
+    justDraggedGrid = true;
+    setTimeout(()=>{ justDraggedGrid = false; }, 350);
+    finishTileResize(kind, id, currentSpan);
+  }
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp, { once: true });
+}
+async function finishTileResize(kind, id, span){
+  if (kind === 'step'){
+    const s = STEPS.find(x=> x.id === id);
+    if (s){ s.widgetSpan = span; await saveSteps(); }
+  } else {
+    const l = todoLists.find(x=> x.id === id);
+    if (l){ l.widgetSpan = span; await saveTodoLists(); }
+  }
+  render();
+}
+window.addEventListener('resize', ()=>{
+  if (view === 'grid') render();
+});
+
+// ---------- inline grid reorder (long-press + drag directly on the tiles) ----------
+let justDraggedGrid = false;
+function setupGridReorder(){
+  const grid = card.querySelector('.win-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.win-card').forEach(el=>{
+    el.addEventListener('pointerdown', (e)=> armGridDrag(e, el, grid));
+  });
+}
+function armGridDrag(e, el, grid){
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (e.target.closest('.win-check')) return; // let the checkmark handle its own tap
+  if (e.target.closest('.win-resize-handle')) return; // let the resize handle drive its own drag
+  const startX = e.clientX, startY = e.clientY;
+  let moved = false;
+  let timer = null;
+
+  function cleanup(){
+    clearTimeout(timer);
+    document.removeEventListener('pointermove', onPreMove);
+    document.removeEventListener('pointerup', onPreUp);
+  }
+  function onPreMove(ev){
+    if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8){
+      moved = true;
+      cleanup();
+    }
+  }
+  function onPreUp(){ cleanup(); }
+
+  document.addEventListener('pointermove', onPreMove);
+  document.addEventListener('pointerup', onPreUp, { once: true });
+
+  timer = setTimeout(()=>{
+    if (moved) return;
+    cleanup();
+    beginGridDrag(e, el, grid);
+  }, 380);
+}
+function beginGridDrag(e, el, grid){
+  e.preventDefault();
+  if (navigator.vibrate) navigator.vibrate(12);
+
+  const kindSelector = el.hasAttribute('data-id') ? '[data-id]' : '[data-todo-id]';
+  const startRect = el.getBoundingClientRect();
+  const grabX = e.clientX - startRect.left;
+  const grabY = e.clientY - startRect.top;
+
+  el.classList.add('grid-dragging');
+  el.style.zIndex = 50;
+  el.style.pointerEvents = 'none';
+
+  function naturalRect(){
+    const prevTransform = el.style.transform;
+    el.style.transform = 'none';
+    void el.offsetWidth;
+    const r = el.getBoundingClientRect();
+    el.style.transform = prevTransform;
+    return r;
+  }
+  function applyTransform(clientX, clientY){
+    const targetLeft = clientX - grabX;
+    const targetTop = clientY - grabY;
+    const nat = naturalRect();
+    el.style.transform = `translate(${targetLeft - nat.left}px, ${targetTop - nat.top}px)`;
+  }
+  applyTransform(e.clientX, e.clientY);
+
+  function onMove(ev){
+    applyTransform(ev.clientX, ev.clientY);
+    const siblings = Array.from(grid.querySelectorAll('.win-card' + kindSelector)).filter(c=> c !== el);
+    let targetCard = null;
+    for (const c of siblings){
+      const r = c.getBoundingClientRect();
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom){
+        targetCard = c;
+        break;
+      }
+    }
+    if (targetCard){
+      const allCards = Array.from(grid.querySelectorAll('.win-card'));
+      const elIdx = allCards.indexOf(el);
+      const targetIdx = allCards.indexOf(targetCard);
+      if (elIdx < targetIdx) targetCard.after(el); else targetCard.before(el);
+    }
+  }
+  function onUp(){
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    el.classList.remove('grid-dragging');
+    el.style.transform = '';
+    el.style.zIndex = '';
+    el.style.pointerEvents = '';
+    justDraggedGrid = true;
+    setTimeout(()=>{ justDraggedGrid = false; }, 350);
+    finishGridDrag(grid, kindSelector);
+  }
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp, { once: true });
+}
+async function finishGridDrag(grid, kindSelector){
+  const items = Array.from(grid.querySelectorAll('.win-card' + kindSelector));
+  if (kindSelector === '[data-id]'){
+    const newOrderIds = items.map(el=> el.dataset.id);
+    const idToObj = {};
+    newOrderIds.forEach(id=>{ idToObj[id] = STEPS.find(s=> s.id === id); });
+    const slots = newOrderIds.map(id => STEPS.findIndex(s=> s.id === id)).sort((a,b)=> a-b);
+    newOrderIds.forEach((id, i)=>{ STEPS[slots[i]] = idToObj[id]; });
+    await saveSteps();
+  } else {
+    const newOrderIds = items.map(el=> el.dataset.todoId);
+    todoLists.sort((a,b)=> newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
+    await saveTodoLists();
+  }
+  render();
 }
 
 // ---------- manage / reorder ----------
@@ -1833,6 +2207,7 @@ function renderManageScreen(){
   card.innerHTML = `
     <h1 style="font-size:26px;">Reorder windows</h1>
     <p class="sub">Drag the handle to reorder, remove one, or tap a title to open and edit it — even skills not scheduled for today.</p>
+    ${todoLists.length ? '<div class="grid-divider" style="margin:4px 0 10px;"><span>Daily Skills</span></div>' : ''}
     <div class="manage-list" id="manageList">
       ${STEPS.map((s,i) => `
         <div class="manage-item" data-id="${s.id}">
@@ -1844,14 +2219,28 @@ function renderManageScreen(){
         </div>
       `).join('') || '<p class="skill-note-empty">No windows yet.</p>'}
     </div>
+    ${todoLists.length ? `
+    <div class="grid-divider" style="margin:18px 0 10px;"><span>Tasks / Ideas</span></div>
+    <div class="manage-list" id="manageTodoListsList">
+      ${todoLists.map((l,i) => `
+        <div class="manage-item" data-id="${l.id}">
+          <button class="manage-drag" data-id="${l.id}" aria-label="Drag to reorder">⠿</button>
+          <div class="manage-item-title manage-item-title-link" data-todo-id="${l.id}">${i+1}. ${l.title}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
   `;
-  card.querySelectorAll('.manage-item-title-link').forEach(el=>{
+  card.querySelectorAll('.manage-item-title-link[data-id]').forEach(el=>{
     el.addEventListener('click', ()=>{ view = 'detail'; activeId = el.dataset.id; render(); });
+  });
+  card.querySelectorAll('.manage-item-title-link[data-todo-id]').forEach(el=>{
+    el.addEventListener('click', ()=>{ view = 'todo'; activeTodoListId = el.dataset.todoId; render(); });
   });
   card.querySelectorAll('.manage-remove').forEach(b=>{
     b.addEventListener('click', (e)=>{ e.stopPropagation(); removeStep(b.dataset.id); });
   });
   setupStepDragReorder();
+  setupTodoListManageDragReorder();
 }
 function setupStepDragReorder(){
   const listEl = document.getElementById('manageList');
@@ -1939,6 +2328,100 @@ function beginStepDrag(e, listEl){
       STEPS.sort((a,b)=> order.indexOf(a.id) - order.indexOf(b.id));
       await saveSteps();
       renderManageScreen();
+      renderManageNav();
+    }, 180);
+  }
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp, { once: true });
+}
+function setupTodoListManageDragReorder(){
+  const listEl = document.getElementById('manageTodoListsList');
+  if (!listEl) return;
+  listEl.querySelectorAll('.manage-drag').forEach(handle=>{
+    handle.addEventListener('pointerdown', (e)=> beginTodoListManageDrag(e, listEl));
+  });
+}
+function beginTodoListManageDrag(e, listEl){
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const row = e.target.closest('.manage-item');
+  if (!row) return;
+  e.preventDefault();
+
+  const rows = Array.from(listEl.children).filter(el=> el.classList.contains('manage-item'));
+  if (rows.length < 2) return;
+  const listRect = listEl.getBoundingClientRect();
+  const rects = rows.map(r=> r.getBoundingClientRect());
+  const GAP = 10;
+
+  listEl.style.height = listRect.height + 'px';
+  rows.forEach((r,i)=>{
+    r.style.position = 'absolute';
+    r.style.left = '0';
+    r.style.right = '0';
+    r.style.top = (rects[i].top - listRect.top) + 'px';
+    r.style.transition = 'top 0.18s ease';
+    r.style.width = '100%';
+  });
+  listEl.style.position = 'relative';
+
+  const startIndex = rows.indexOf(row);
+  row.style.transition = 'none';
+  row.style.zIndex = 5;
+  row.classList.add('dragging');
+
+  let order = rows.map(r=> r.dataset.id);
+  const heightOf = id => rects[rows.findIndex(r=> r.dataset.id === id)].height;
+  const startY = e.clientY;
+  const rowStartTop = rects[startIndex].top - listRect.top;
+
+  function topsFromOrder(){
+    const tops = {};
+    let c = 0;
+    order.forEach(id=>{ tops[id] = c; c += heightOf(id) + GAP; });
+    return tops;
+  }
+
+  function onMove(ev){
+    const dy = ev.clientY - startY;
+    const newTop = rowStartTop + dy;
+    row.style.top = newTop + 'px';
+    const rowCenter = newTop + rects[startIndex].height / 2;
+
+    const fromIdx = order.indexOf(row.dataset.id);
+    const tops = topsFromOrder();
+    let targetIdx = fromIdx;
+    for (let i = 0; i < order.length; i++){
+      if (order[i] === row.dataset.id) continue;
+      const mid = tops[order[i]] + heightOf(order[i]) / 2;
+      if (i < fromIdx && rowCenter < mid){ targetIdx = i; break; }
+      if (i > fromIdx && rowCenter > mid){ targetIdx = i; }
+    }
+    if (targetIdx !== fromIdx){
+      order.splice(fromIdx, 1);
+      order.splice(targetIdx, 0, row.dataset.id);
+      const newTops = topsFromOrder();
+      order.forEach(id=>{
+        if (id === row.dataset.id) return;
+        const r = rows.find(rr=> rr.dataset.id === id);
+        r.style.top = newTops[id] + 'px';
+      });
+    }
+  }
+
+  function onUp(){
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    row.classList.remove('dragging');
+    row.style.zIndex = '';
+    const tops = topsFromOrder();
+    row.style.transition = 'top 0.18s ease';
+    row.style.top = tops[row.dataset.id] + 'px';
+    setTimeout(async ()=>{
+      todoLists.sort((a,b)=> order.indexOf(a.id) - order.indexOf(b.id));
+      await saveTodoLists();
+      renderManageScreen();
+      renderManageNav();
     }, 180);
   }
 
@@ -2469,6 +2952,7 @@ async function render(){
     stepLabel.textContent = s.title;
     if (editingWindow === s.id){
       renderWindowEditor(s);
+      renderWindowEditorNav();
       outerActions.innerHTML = '';
       return;
     }
