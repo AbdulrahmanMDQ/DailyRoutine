@@ -775,6 +775,29 @@
   }
   .link-remove-btn:hover{ background: var(--danger-soft); }
 
+  .link-edit-group{
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(17,17,26,0.015);
+  }
+  .link-edit-group .link-edit-row{ margin-bottom: 10px; }
+  .link-schedule-row .edit-field{ margin-bottom: 0 !important; }
+  .link-schedule-row label{
+    font-family:'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    opacity: 0.85;
+  }
+  .link-schedule-row .weekday-block{
+    padding: 8px 3px;
+    font-size: 11.5px;
+    min-width: 0;
+  }
+
   .period-tabs{
     display:flex;
     gap: 8px;
@@ -802,14 +825,69 @@
     flex-direction:column;
     gap: 14px;
   }
-  .progress-item-top{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom: 6px;
-    font-size: 13px;
+  .progress-card{
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 16px 16px 14px;
+    background: var(--surface);
   }
-  .progress-item-title{ font-weight: 500; color: var(--ink); }
-  .progress-item-count{ color: var(--ink-soft); font-family:'Inter', sans-serif; }
+  .progress-card-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+  }
+  .progress-card-heading{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    min-width:0;
+  }
+  .progress-card-icon{ flex-shrink:0; display:flex; }
+  .progress-card-icon svg{ width:26px; height:26px; stroke: var(--dawn); stroke-width:1.6; fill:none; }
+  .progress-card-title{
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--ink);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .progress-card-count{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .progress-ring{ flex-shrink:0; }
+  .progress-ring-label{
+    font-family:'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    fill: var(--ink);
+  }
+  .progress-trail{
+    display:flex;
+    gap: 5px;
+    margin-top: 14px;
+  }
+  .progress-trail-empty{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    opacity:0.75;
+    margin: 14px 0 0;
+  }
+  .progress-dot{
+    flex:1 1 0;
+    height: 16px;
+    min-width:0;
+    border-radius: 5px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+  }
+  .progress-dot-done{ background: linear-gradient(135deg, var(--dawn), var(--sage)); border-color: transparent; }
+  .progress-dot-partial{ background: color-mix(in srgb, var(--gold) 55%, #fff); border-color: color-mix(in srgb, var(--gold) 60%, var(--border)); }
+  .progress-dot-missed{ background: rgba(17,17,26,0.045); }
+  .progress-dot-today{ box-shadow: 0 0 0 2px color-mix(in srgb, var(--dawn) 45%, transparent); }
   .progress-bar-track{
     height: 8px;
     border-radius: 999px;
@@ -821,6 +899,46 @@
     border-radius: 999px;
     background: linear-gradient(90deg, var(--dawn), var(--sage));
   }
+  .progress-sublist{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .progress-subitem{
+    display:grid;
+    grid-template-columns: auto minmax(0,1fr) auto;
+    align-items:center;
+    gap: 8px;
+  }
+  .progress-subitem-dot{
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink:0;
+  }
+  .progress-subitem-title{
+    color: var(--ink-soft);
+    font-weight: 500;
+    font-size: 12px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .progress-subitem .progress-bar-track{ display:none; }
+  .progress-subitem-count{
+    color: var(--ink-soft);
+    opacity:0.8;
+    font-family:'Inter', sans-serif;
+    font-size: 11px;
+    flex-shrink:0;
+  }
+  @media (min-width: 420px){
+    .progress-subitem{ grid-template-columns: auto minmax(0,1fr) 72px auto; }
+    .progress-subitem .progress-bar-track{ display:block; }
+  }
+  .progress-bar-track.thin{ height: 5px; }
 
   /* Intro screen */
   .intro{ text-align:center; padding: 30px 10px; }
@@ -1160,6 +1278,7 @@ let editDraft = null;     // { title, sub, links: [{label,url}] }
 let addDraft = null;      // { title, sub, links: [{label,url}] } for the add-window form
 let completions = { day: '', done: {} };
 let history = {}; // { 'YYYY-MM-DD': { stepId: true, ... } }
+let linkHistory = {}; // { 'YYYY-MM-DD': { stepId: { linkIdx: true/false, ... } } } — per-link record, tracked from the day this feature shipped onward
 let progressPeriod = 'week';
 let todos = []; // [{ id, listId, text, color, done }] — one-off tasks, separate from habit windows
 let todoCleanupDate = null; // last date (YYYY-MM-DD) completed tasks were auto-cleared
@@ -1242,7 +1361,17 @@ async function saveHistory(){
   try{ await window.storage.set('completion-history', JSON.stringify(history), false); }
   catch(e){ console.error('storage error', e); }
 }
-const BACKUP_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'weight-entries', 'todo-list', 'todo-lists'];
+async function loadLinkHistory(){
+  try{
+    const res = await window.storage.get('link-history', false);
+    return res ? JSON.parse(res.value) : {};
+  }catch(e){ return {}; }
+}
+async function saveLinkHistory(){
+  try{ await window.storage.set('link-history', JSON.stringify(linkHistory), false); }
+  catch(e){ console.error('storage error', e); }
+}
+const BACKUP_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'link-history', 'weight-entries', 'todo-list', 'todo-lists'];
 
 async function exportBackup(){
   const data = {};
@@ -1277,6 +1406,7 @@ async function importBackup(file){
     skillNotes = await loadSkillNotes();
     completions = await loadCompletions();
     history = await loadHistory();
+    linkHistory = await loadLinkHistory();
     todos = await loadTodos();
     const loadedLists = await loadTodoLists();
     if (loadedLists) todoLists = loadedLists;
@@ -1434,27 +1564,52 @@ function ensureToday(){
 // A window with no schedule is due every day.
 // New format: schedule.days = array of weekday numbers (0=Sun,1=Mon...6=Sat) it recurs on.
 // Legacy format (interval/startDate) is still honored for windows not yet re-saved.
-function isDueToday(s){
+// A window with no schedule is due every day.
+// New format: schedule.days = array of weekday numbers (0=Sun,1=Mon...6=Sat) it recurs on.
+// Legacy format (interval/startDate) is still honored for windows not yet re-saved.
+function weekdayOf(dateKey){
+  return new Date(dateKey + 'T00:00:00').getDay(); // 0=Sun...6=Sat
+}
+function isWindowScheduledOnDate(s, dateKey){
   if (!s.schedule) return true;
-  if (Array.isArray(s.schedule.days)){
-    const dow = new Date(todayKey() + 'T00:00:00').getDay(); // 0=Sun...6=Sat
-    return s.schedule.days.includes(dow);
-  }
+  if (Array.isArray(s.schedule.days)) return s.schedule.days.includes(weekdayOf(dateKey));
   if (!s.schedule.interval || s.schedule.interval <= 1) return true;
   const start = s.schedule.startDate;
   if (!start) return true;
   const startD = new Date(start + 'T00:00:00');
-  const todayD = new Date(todayKey() + 'T00:00:00');
-  const diffDays = Math.round((todayD - startD) / 86400000);
+  const d = new Date(dateKey + 'T00:00:00');
+  const diffDays = Math.round((d - startD) / 86400000);
   if (diffDays < 0) return false;
   return diffDays % s.schedule.interval === 0;
+}
+// Per-link scheduling: a link with no schedule is due every day it's shown.
+function isLinkScheduledOnDate(link, dateKey){
+  if (!link || !link.schedule) return true;
+  if (Array.isArray(link.schedule.days)) return link.schedule.days.includes(weekdayOf(dateKey));
+  return true;
+}
+function isDueToday(s){
+  const t = todayKey();
+  if (!isWindowScheduledOnDate(s, t)) return false;
+  // If this window's links each carry their own day schedule, hide the whole
+  // window on days when none of its links are due.
+  if (Array.isArray(s.links) && s.links.length && !s.links.some(l => isLinkScheduledOnDate(l, t))){
+    return false;
+  }
+  return true;
+}
+function isLinkDueToday(link){
+  return isLinkScheduledOnDate(link, todayKey());
 }
 
 // Returns { checked, total, ratio, isFull, hasLinks } for a step —
 // windows with multiple links are tracked per-link; others use the single done flag.
 function stepProgress(s){
-  const links = s.links || [];
-  if (!links.length){
+  const allLinks = s.links || [];
+  // Only links scheduled for today count toward this window's progress.
+  const dueIdxs = [];
+  allLinks.forEach((l,i)=>{ if (isLinkDueToday(l)) dueIdxs.push(i); });
+  if (!dueIdxs.length){
     const done = !!completions.done[s.id];
     return { checked: done ? 1 : 0, total: 1, ratio: done ? 1 : 0, isFull: done, hasLinks: false };
   }
@@ -1462,13 +1617,14 @@ function stepProgress(s){
   if (!linkState && completions.done && completions.done[s.id]){
     // legacy data from before per-link tracking existed — treat as fully checked
     linkState = {};
-    for (let i = 0; i < links.length; i++) linkState[i] = true;
+    dueIdxs.forEach(i => { linkState[i] = true; });
   }
   linkState = linkState || {};
   let checked = 0;
-  for (let i = 0; i < links.length; i++) if (linkState[i]) checked++;
-  const ratio = checked / links.length;
-  return { checked, total: links.length, ratio, isFull: checked === links.length, hasLinks: true };
+  dueIdxs.forEach(i => { if (linkState[i]) checked++; });
+  const total = dueIdxs.length;
+  const ratio = checked / total;
+  return { checked, total, ratio, isFull: checked === total, hasLinks: true };
 }
 
 async function recordHistory(id, isFull){
@@ -1476,6 +1632,21 @@ async function recordHistory(id, isFull){
   if (!history[key]) history[key] = {};
   if (isFull) history[key][id] = true; else delete history[key][id];
   await saveHistory();
+}
+
+// Records which of today's due links were actually checked, so the Progress
+// page can show real per-task completion going forward.
+async function recordLinkHistory(id, s){
+  const key = todayKey();
+  const linkState = (completions.links && completions.links[id]) || {};
+  const dayRecord = {};
+  (s.links || []).forEach((l,i)=>{
+    if (!isLinkDueToday(l)) return; // only record availability for links due today
+    dayRecord[i] = !!linkState[i];
+  });
+  if (!linkHistory[key]) linkHistory[key] = {};
+  linkHistory[key][id] = dayRecord;
+  await saveLinkHistory();
 }
 
 // Bulk toggle: used by the grid checkmark and the detail "Mark complete" button.
@@ -1486,13 +1657,17 @@ async function toggleComplete(id){
   const prog = stepProgress(s);
   const nowDone = !prog.isFull;
   if (prog.hasLinks){
-    const state = {};
-    if (nowDone){ for (let i = 0; i < s.links.length; i++) state[i] = true; }
+    const state = { ...((completions.links && completions.links[id]) || {}) };
+    (s.links || []).forEach((l,i)=>{
+      if (!isLinkDueToday(l)) return; // leave untouched links not scheduled today as-is
+      if (nowDone) state[i] = true; else delete state[i];
+    });
     completions.links[id] = state;
   }
   completions.done[id] = nowDone;
   await saveCompletions();
   await recordHistory(id, nowDone);
+  if (prog.hasLinks) await recordLinkHistory(id, s);
   render();
 }
 
@@ -1507,6 +1682,7 @@ async function toggleLinkComplete(id, idx){
   completions.done[id] = prog.isFull;
   await saveCompletions();
   await recordHistory(id, prog.isFull);
+  await recordLinkHistory(id, s);
   render();
 }
 
@@ -1626,14 +1802,16 @@ async function renderWeightStep(s){
 const CHECK_SVG_SM = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg>';
 
 function renderLinkStep(s){
-  const links = s.links || [];
+  const allLinks = s.links || [];
   const linkState = (completions.links && completions.links[s.id]) || {};
+  // Links carrying their own schedule are hidden entirely on days they're not due.
+  const visible = allLinks.map((l,i)=>({l,i})).filter(({l}) => isLinkDueToday(l));
   card.innerHTML = `
     ${iconFor(s)}
     <h1>${s.title}</h1>
     ${s.sub ? `<p class="sub">${s.sub}</p>` : ''}
-    ${links.length ? `<div class="link-list" id="linkListView">
-      ${links.map((l,i) => {
+    ${visible.length ? `<div class="link-list" id="linkListView">
+      ${visible.map(({l,i}) => {
         const checked = !!linkState[i];
         const hasUrl = !!(l.url && l.url.trim());
         const item = hasUrl
@@ -1641,7 +1819,7 @@ function renderLinkStep(s){
           : `<div class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn link-no-url">${l.label}</div>`;
         return `
         <div class="link-row" data-idx="${i}">
-          ${links.length > 1 ? `<button class="link-drag" aria-label="Drag to reorder">⠿</button>` : ''}
+          ${visible.length > 1 ? `<button class="link-drag" aria-label="Drag to reorder">⠿</button>` : ''}
           ${item}
           <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark link incomplete':'Mark link complete'}">${checked?CHECK_SVG_SM:''}</button>
         </div>`;
@@ -1750,10 +1928,27 @@ async function reorderStepLinks(stepId, oldIndicesInNewOrder){
   if (!step || !Array.isArray(step.links)) return;
   const oldLinks = step.links;
   const oldState = (completions.links && completions.links[stepId]) || {};
-  step.links = oldIndicesInNewOrder.map(i => oldLinks[i]);
+
+  // Only links visible (due) today are draggable, so oldIndicesInNewOrder may be a
+  // subset of the full links array. Refill just those original slots in the new
+  // order and leave any hidden (not-due-today) links exactly where they were.
+  const visibleSet = new Set(oldIndicesInNewOrder);
+  const visibleSlots = oldLinks.map((_,i)=>i).filter(i => visibleSet.has(i));
+  const newLinks = oldLinks.slice();
+  const idxMap = {}; // old index -> new index
+  visibleSlots.forEach((slot, pos) => {
+    const oldIdx = oldIndicesInNewOrder[pos];
+    newLinks[slot] = oldLinks[oldIdx];
+    idxMap[oldIdx] = slot;
+  });
+  oldLinks.forEach((_, i) => { if (!visibleSet.has(i)) idxMap[i] = i; });
+
+  step.links = newLinks;
   const newState = {};
-  oldIndicesInNewOrder.forEach((oldIdx, newIdx)=>{
-    if (oldState[oldIdx]) newState[newIdx] = true;
+  Object.keys(oldState).forEach(oldIdxStr=>{
+    const oldIdx = parseInt(oldIdxStr, 10);
+    const newIdx = idxMap[oldIdx];
+    if (newIdx !== undefined && oldState[oldIdxStr]) newState[newIdx] = true;
   });
   if (!completions.links) completions.links = {};
   completions.links[stepId] = newState;
@@ -1771,10 +1966,10 @@ const WEEKDAY_BLOCKS = [
   { day: 6, label: 'Sat' },
   { day: 0, label: 'Sun' }
 ];
-function renderScheduleHTML(idPrefix, selectedDays){
+function renderScheduleHTML(idPrefix, selectedDays, label){
   return `
     <div class="edit-field" style="margin-bottom:16px;">
-      <label>Repeats on</label>
+      <label>${label || 'Repeats on'}</label>
       <div class="weekday-row" id="${idPrefix}WeekdayRow">
         ${WEEKDAY_BLOCKS.map(w => `<button type="button" class="weekday-block ${selectedDays.includes(w.day)?'selected':''}" data-day="${w.day}" data-prefix="${idPrefix}">${w.label}</button>`).join('')}
       </div>
@@ -1814,10 +2009,11 @@ function captureEditDraftFromInputs(){
   if (noteInput) editDraft.note = noteInput.value;
   const rows = card.querySelectorAll('.link-edit-row');
   const links = [];
-  rows.forEach(row=>{
+  rows.forEach((row, i)=>{
     const label = row.querySelector('[data-k="label"]').value;
     const url = row.querySelector('[data-k="url"]').value;
-    links.push({ label, url });
+    const existingDays = (editDraft.links[i] && editDraft.links[i].days) || [0,1,2,3,4,5,6];
+    links.push({ label, url, days: existingDays });
   });
   editDraft.links = links;
 }
@@ -1827,14 +2023,27 @@ function renderLinkRowsHTML(links){
     return '<p class="skill-note-empty" style="margin:4px 0 12px;">No links added — this window will just show its title, description, and skill note.</p>';
   }
   return links.map((l,i) => `
-    <div class="link-edit-row">
-      <div class="link-edit-fields">
-        <input type="text" class="edit-input" dir="auto" data-k="label" placeholder="Button label (e.g. Open Gmail)" value="${(l.label||'').replace(/"/g,'&quot;')}">
-        <input type="url" class="edit-input" dir="ltr" data-k="url" placeholder="https:// (optional)" value="${(l.url||'').replace(/"/g,'&quot;')}">
+    <div class="link-edit-group">
+      <div class="link-edit-row">
+        <div class="link-edit-fields">
+          <input type="text" class="edit-input" dir="auto" data-k="label" placeholder="Button label (e.g. Open Gmail)" value="${(l.label||'').replace(/"/g,'&quot;')}">
+          <input type="url" class="edit-input" dir="ltr" data-k="url" placeholder="https:// (optional)" value="${(l.url||'').replace(/"/g,'&quot;')}">
+        </div>
+        <button class="link-remove-btn" data-idx="${i}" aria-label="Remove link">✕</button>
       </div>
-      <button class="link-remove-btn" data-idx="${i}" aria-label="Remove link">✕</button>
+      <div class="link-schedule-row">
+        ${renderScheduleHTML(`link${i}`, l.days || [0,1,2,3,4,5,6], 'Shows on')}
+      </div>
     </div>
   `).join('');
+}
+// Wires the per-link weekday pickers rendered by renderLinkRowsHTML. `linksRef` must be
+// the live draft.links array so clicks mutate day selections in place immediately.
+function wireLinkScheduleBlocks(linksRef){
+  linksRef.forEach((l, i) => {
+    if (!l.days) l.days = [0,1,2,3,4,5,6];
+    wireWeekdayBlocks(`link${i}`, l);
+  });
 }
 
 function renderWindowEditor(s){
@@ -1870,7 +2079,7 @@ function renderWindowEditor(s){
 
   document.getElementById('addLinkRowBtn').addEventListener('click', ()=>{
     captureEditDraftFromInputs();
-    editDraft.links.push({ label:'', url:'' });
+    editDraft.links.push({ label:'', url:'', days:[0,1,2,3,4,5,6] });
     render();
   });
   card.querySelectorAll('.link-remove-btn').forEach(btn=>{
@@ -1881,6 +2090,7 @@ function renderWindowEditor(s){
     });
   });
   wireWeekdayBlocks('edit', editDraft);
+  wireLinkScheduleBlocks(editDraft.links);
   document.getElementById('saveWindowBtn').addEventListener('click', async ()=>{
     captureEditDraftFromInputs();
     const title = editDraft.title.trim();
@@ -1892,7 +2102,12 @@ function renderWindowEditor(s){
     }
     const finalLinks = editDraft.links
       .filter(l => (l.url||'').trim() || (l.label||'').trim())
-      .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }));
+      .map((l,i) => ({
+        label: (l.label||'').trim() || 'Open App',
+        url: (l.url||'').trim(),
+        primary: i===0,
+        schedule: computeScheduleFromDays(l.days || [0,1,2,3,4,5,6])
+      }));
     const schedule = computeScheduleFromDays(editDraft.days);
     const noteVal = editDraft.note.trim();
     if (noteVal) skillNotes[s.id] = noteVal; else delete skillNotes[s.id];
@@ -2448,15 +2663,16 @@ function captureAddDraftFromInputs(){
   if (subInput) addDraft.sub = subInput.value;
   const rows = card.querySelectorAll('.link-edit-row');
   const links = [];
-  rows.forEach(row=>{
+  rows.forEach((row, i)=>{
     const label = row.querySelector('[data-k="label"]').value;
     const url = row.querySelector('[data-k="url"]').value;
-    links.push({ label, url });
+    const existingDays = (addDraft.links[i] && addDraft.links[i].days) || [0,1,2,3,4,5,6];
+    links.push({ label, url, days: existingDays });
   });
   addDraft.links = links;
 }
 function renderAddForm(){
-  if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:''}], days:[1,2,3,4,5,6] };
+  if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:'', days:[0,1,2,3,4,5,6]}], days:[1,2,3,4,5,6] };
   card.innerHTML = `
     <h1 style="font-size:26px;">Add a skill</h1>
     <div class="edit-fields">
@@ -2483,7 +2699,7 @@ function renderAddForm(){
   `;
   document.getElementById('addLinkRowBtn').addEventListener('click', ()=>{
     captureAddDraftFromInputs();
-    addDraft.links.push({ label:'', url:'' });
+    addDraft.links.push({ label:'', url:'', days:[0,1,2,3,4,5,6] });
     render();
   });
   card.querySelectorAll('.link-remove-btn').forEach(btn=>{
@@ -2494,6 +2710,7 @@ function renderAddForm(){
     });
   });
   wireWeekdayBlocks('new', addDraft);
+  wireLinkScheduleBlocks(addDraft.links);
   document.getElementById('confirmAddBtn').addEventListener('click', async ()=>{
     captureAddDraftFromInputs();
     const title = addDraft.title.trim();
@@ -2505,7 +2722,12 @@ function renderAddForm(){
     }
     const finalLinks = addDraft.links
       .filter(l => (l.url||'').trim() || (l.label||'').trim())
-      .map((l,i) => ({ label: (l.label||'').trim() || 'Open App', url: (l.url||'').trim(), primary: i===0 }));
+      .map((l,i) => ({
+        label: (l.label||'').trim() || 'Open App',
+        url: (l.url||'').trim(),
+        primary: i===0,
+        schedule: computeScheduleFromDays(l.days || [0,1,2,3,4,5,6])
+      }));
     const schedule = computeScheduleFromDays(addDraft.days);
     const newStep = { id: slugify(title), iconKey: 'custom', title, sub: addDraft.sub.trim(), links: finalLinks, schedule };
     STEPS.push(newStep);
@@ -2522,6 +2744,28 @@ function renderAddForm(){
 }
 
 // ---------- progress page ----------
+// A window's completion ratio for one specific day (used for the day-trail dots).
+// Uses granular per-link history when available; falls back to the whole-window
+// boolean record for days recorded before per-task tracking existed.
+function windowDayRatio(s, k){
+  const links = s.links || [];
+  if (!links.length){
+    return (history[k] && history[k][s.id]) ? 1 : 0;
+  }
+  const dueIdxs = [];
+  links.forEach((l,i)=>{ if (isLinkScheduledOnDate(l, k)) dueIdxs.push(i); });
+  if (!dueIdxs.length) return 0;
+  const rec = linkHistory[k] && linkHistory[k][s.id];
+  if (rec){
+    let checked = 0;
+    dueIdxs.forEach(i => { if (rec[i]) checked++; });
+    return checked / dueIdxs.length;
+  }
+  return (history[k] && history[k][s.id]) ? 1 : 0;
+}
+
+const TRAIL_LEN = 10; // how many recent scheduled days to show in the consistency trail
+
 function computeStats(days){
   const keys = [];
   const base = new Date();
@@ -2530,33 +2774,122 @@ function computeStats(days){
     d.setDate(d.getDate() - i);
     keys.push(localDateKey(d));
   }
+  const todayK = todayKey();
   return STEPS.map(s => {
-    const count = keys.filter(k => history[k] && history[k][s.id]).length;
-    return { id: s.id, title: s.title, count, total: days };
+    // Only count days the window itself was actually scheduled to appear.
+    const availableKeys = keys.filter(k => isWindowScheduledOnDate(s, k));
+    const count = availableKeys.filter(k => history[k] && history[k][s.id]).length;
+    const total = availableKeys.length;
+
+    // Recent day-by-day trail, oldest to newest, capped so it stays compact.
+    const trailKeys = availableKeys.slice(0, TRAIL_LEN).reverse();
+    const trail = trailKeys.map(k => ({ ratio: windowDayRatio(s, k), isToday: k === todayK }));
+
+    // Per-task breakdown: each link's own denominator is the days IT was
+    // scheduled (its own days AND the window's days), not the full period.
+    const links = (s.links || []).map((l, idx) => {
+      const linkAvailableKeys = availableKeys.filter(k => isLinkScheduledOnDate(l, k));
+      let checked = 0;
+      linkAvailableKeys.forEach(k => {
+        const rec = linkHistory[k] && linkHistory[k][s.id];
+        if (rec && Object.prototype.hasOwnProperty.call(rec, idx)){
+          if (rec[idx]) checked++;
+        } else if (history[k] && history[k][s.id]){
+          // No granular record for this day (before per-task tracking existed) —
+          // fall back to the window's own record: a fully-done window counts
+          // every task as done that day.
+          checked++;
+        }
+      });
+      return { label: l.label || 'Untitled', checked, total: linkAvailableKeys.length };
+    });
+
+    return { id: s.id, title: s.title, iconKey: s.iconKey, count, total, trail, links };
   });
 }
+
+// Builds an SVG progress ring: a faint full circle plus a gradient arc for the
+// completed fraction, with the percentage set as the center text.
+function ringSVG(pct, gradId){
+  const size = 58, stroke = 6;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - pct / 100);
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="progress-ring">
+      <defs>
+        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="var(--dawn)"/>
+          <stop offset="100%" stop-color="var(--sage)"/>
+        </linearGradient>
+      </defs>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--border-soft)" stroke-width="${stroke}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#${gradId})" stroke-width="${stroke}"
+        stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+        transform="rotate(-90 ${size/2} ${size/2})"/>
+      <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" class="progress-ring-label">${pct}%</text>
+    </svg>
+  `;
+}
+
+// A row of small blocks (same visual language as the weekday picker) showing
+// how the last several scheduled days actually went — done, partial, or missed.
+function trailHTML(trail){
+  if (!trail.length) return '<p class="progress-trail-empty">Nothing scheduled yet.</p>';
+  return `<div class="progress-trail">
+    ${trail.map(t => {
+      let cls = 'progress-dot-missed';
+      if (t.ratio >= 1) cls = 'progress-dot-done';
+      else if (t.ratio > 0) cls = 'progress-dot-partial';
+      return `<span class="progress-dot ${cls} ${t.isToday ? 'progress-dot-today' : ''}"></span>`;
+    }).join('')}
+  </div>`;
+}
+
+const TASK_ACCENTS = ['var(--dawn)', 'var(--sage)', 'var(--gold)', 'var(--violet)', 'var(--sunflower)'];
+
 function renderProgress(){
   const days = progressPeriod === 'week' ? 7 : progressPeriod === 'month' ? 30 : 365;
   const stats = computeStats(days);
   card.innerHTML = `
     ${ICONS.chart}
     <h1 style="font-size:26px;">Progress</h1>
-    <p class="sub">How consistently you're hitting each window.</p>
+    <p class="sub">How consistently you're hitting each window, and each task inside it.</p>
     <div class="period-tabs">
       <button class="period-tab ${progressPeriod==='week'?'active':''}" data-p="week">Week</button>
       <button class="period-tab ${progressPeriod==='month'?'active':''}" data-p="month">Month</button>
       <button class="period-tab ${progressPeriod==='year'?'active':''}" data-p="year">Year</button>
     </div>
     <div class="progress-list">
-      ${stats.map(st => {
+      ${stats.map((st, si) => {
         const pct = st.total ? Math.round((st.count/st.total)*100) : 0;
+        const gradId = `progRing-${si}`;
         return `
-        <div class="progress-item">
-          <div class="progress-item-top">
-            <span class="progress-item-title">${st.title}</span>
-            <span class="progress-item-count">${st.count}/${st.total}</span>
+        <div class="progress-card">
+          <div class="progress-card-top">
+            <div class="progress-card-heading">
+              <span class="progress-card-icon">${(ICONS[st.iconKey] || ICONS.custom)}</span>
+              <div>
+                <div class="progress-card-title">${st.title}</div>
+                <div class="progress-card-count">${st.count} of ${st.total} scheduled days</div>
+              </div>
+            </div>
+            ${ringSVG(pct, gradId)}
           </div>
-          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+          ${trailHTML(st.trail)}
+          ${st.links.length ? `<div class="progress-sublist">
+            ${st.links.map((l, li) => {
+              const lpct = l.total ? Math.round((l.checked/l.total)*100) : 0;
+              const accent = TASK_ACCENTS[li % TASK_ACCENTS.length];
+              return `
+              <div class="progress-subitem">
+                <span class="progress-subitem-dot" style="background:${accent};"></span>
+                <span class="progress-subitem-title">${l.label}</span>
+                <div class="progress-bar-track thin"><div class="progress-bar-fill" style="width:${lpct}%; background:${accent};"></div></div>
+                <span class="progress-subitem-count">${l.checked}/${l.total}</span>
+              </div>`;
+            }).join('')}
+          </div>` : ''}
         </div>`;
       }).join('') || '<p class="skill-note-empty">No windows yet.</p>'}
     </div>
@@ -2892,7 +3225,7 @@ function renderOuterActions(){
     editingWindow = s.id;
     editDraft = {
       title: s.title, sub: s.sub || '',
-      links: (s.links || []).map(l => ({...l})),
+      links: (s.links || []).map(l => ({...l, days: scheduleToDays(l.schedule)})),
       days: scheduleToDays(s.schedule),
       note: skillNotes[s.id] || ''
     };
@@ -2979,6 +3312,7 @@ async function render(){
   skillNotes = await loadSkillNotes();
   completions = await loadCompletions();
   history = await loadHistory();
+  linkHistory = await loadLinkHistory();
   todos = await loadTodos();
   const loadedLists = await loadTodoLists();
   if (loadedLists){
