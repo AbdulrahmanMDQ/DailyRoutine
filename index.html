@@ -981,6 +981,57 @@
   .tp-open:hover{ color: var(--ink); }
   .today-panel button:focus-visible, .today-panel input:focus-visible{ outline: 2px solid var(--bay); outline-offset: 2px; }
 
+  /* ===== iPhone calendar events ===== */
+  .cal-evdots{ position:absolute; right: 6px; bottom: 8px; z-index:1; display:flex; gap: 2px; }
+  .cal-evdots i{ display:block; width: 5px; height: 5px; border-radius: 50%; background: var(--ec, var(--iris)); }
+  .cal-day.today .cal-evdots i{ box-shadow: 0 0 0 1px var(--void); }
+  .ev-block{ margin: 0 0 26px; }
+  .ev-head{ display:flex; justify-content:space-between; align-items:flex-end; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); }
+  .ev-title{ font-family: var(--serif); font-weight: 300; font-size: 22px; line-height:1.05; margin:0; }
+  .ev-count{ font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
+  .ev-list{ list-style:none; margin:0; padding:0; }
+  .ev-row{ display:flex; align-items:flex-start; gap: 10px; padding: 9px 0 9px 10px; border-bottom: 1px solid var(--border-soft); box-shadow: inset 3px 0 0 var(--ec); }
+  .ev-row.past{ opacity: 0.5; }
+  .ev-time{ flex-shrink:0; width: 92px; font-family: var(--mono); font-size: 10.5px; line-height: 1.6; color: var(--ink-soft); }
+  .ev-main{ flex:1; min-width:0; }
+  .ev-name{ font-size: 14px; line-height: 1.35; overflow-wrap:anywhere; }
+  .ev-loc{ font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; overflow-wrap:anywhere; }
+  .ev-empty{ font-size: 12.5px; color: var(--ink-soft); margin: 10px 0 0; }
+  .ev-note{ font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--danger); margin: 8px 0 0; }
+  .feed-list{ border-top: 1px solid var(--ink); margin-bottom: 20px; }
+  .feed-row{ display:flex; align-items:center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .feed-sw{ flex-shrink:0; width: 14px; height: 14px; }
+  .feed-info{ flex:1; min-width:0; }
+  .feed-name{ font-family: var(--serif); font-size: 19px; font-weight: 300; }
+  .feed-meta{ font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px; overflow-wrap:anywhere; }
+  .feed-meta.err{ color: var(--danger); text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: 12px; }
+  .help-box{ margin: 18px 0 0; padding: 12px 14px; border: 1px solid var(--border); background: var(--paper); font-size: 13px; line-height: 1.55; }
+  .help-box ol{ margin: 6px 0 0; padding-left: 18px; }
+
+  /* ===== account / sync ===== */
+  .auth-msg{ min-height: 18px; margin: -8px 0 14px; font-size: 13px; color: var(--ink); }
+  .auth-msg.error{ color: var(--danger); }
+  .auth-links{ display:flex; justify-content:space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .btn:disabled{ opacity: 0.55; cursor: progress; }
+  .account-bar{ display:flex; align-items:center; justify-content:space-between; gap: 12px; margin: 14px 2px 0; }
+  .account-bar[hidden]{ display:none; }
+  .account-bar .sync-status{ margin: 0; flex: 1; min-width: 0; }
+  .logout-btn{
+    flex-shrink:0; background: transparent; border: 1px solid rgba(243,242,238,0.28); color: var(--ghost);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 8px 12px; border-radius: 0; cursor: pointer;
+  }
+  .logout-btn:hover{ background: var(--infrared); border-color: var(--infrared); color: var(--void); }
+  .logout-btn:focus-visible{ outline: 2px solid var(--bay); outline-offset: 2px; }
+  .sync-status{
+    margin: 14px 2px 0; min-height: 14px;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(243,242,238,0.45); overflow-wrap:anywhere;
+  }
+  .sync-status[data-state="offline"]{ color: var(--shore); }
+  .sync-status[data-state="error"]{ color: var(--infrared); }
+  .card code{ font-family: var(--mono); font-size: 12px; background: rgba(11,11,11,0.06); padding: 1px 4px; }
+
   @media (prefers-reduced-motion: reduce){
     *{ transition:none !important; animation:none !important; }
   }
@@ -1007,9 +1058,20 @@
   <div class="steplabel" id="stepLabel"></div>
   <div class="card" id="card"></div>
   <div class="outer-actions" id="outerActions"></div>
+  <div class="account-bar" id="accountBar" hidden>
+    <div class="sync-status" id="syncStatus" aria-live="polite"></div>
+    <button class="logout-btn" id="logoutBtn" type="button">Log out</button>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ====== ACCOUNT / SYNC SETTINGS ======
+// Paste your Supabase project's URL and anon (public) key here.
+// Supabase dashboard -> Project Settings -> API.
+const SUPABASE_URL = 'https://ckavmejbszgkoosiagde.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Fzn2PBJue4BIBZBsZnyJLA_ESIPsLGj';
+
 // IndexedDB-backed storage shim: more resilient than localStorage for iOS "Add to Home Screen" apps.
 // Falls back to localStorage if IndexedDB is unavailable.
 const DB_NAME = 'daily-routine-db';
@@ -1064,36 +1126,42 @@ async function idbKeys(){
 
 const hasIDB = typeof indexedDB !== 'undefined';
 
+// Raw local storage (no cloud sync) — used by the sync layer itself.
+async function rawGet(key){
+  if (hasIDB){ const v = await idbGet(key); return v === undefined ? undefined : v; }
+  const v = localStorage.getItem(key); return v === null ? undefined : v;
+}
+async function rawSet(key, value){
+  if (hasIDB) await idbSet(key, value); else localStorage.setItem(key, value);
+}
+async function rawDelete(key){
+  if (hasIDB) await idbDelete(key); else localStorage.removeItem(key);
+}
+
+// Keys that hold the user's data and are synced to their account.
+const SYNC_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'link-history',
+  'weight-entries', 'todo-list', 'todo-lists', 'todo-done-log', 'todo-cleanup-date', 'calendar-feeds'];
+
 window.storage = {
   async get(key, shared){
     try{
-      if (hasIDB){
-        const value = await idbGet(key);
-        if (value === undefined) return null;
-        return { key, value, shared: !!shared };
-      }
-      const raw = localStorage.getItem(key);
-      if (raw === null) return null;
-      return { key, value: raw, shared: !!shared };
+      const value = await rawGet(key);
+      if (value === undefined) return null;
+      return { key, value, shared: !!shared };
     }catch(e){ return null; }
   },
   async set(key, value, shared){
     try{
-      if (hasIDB){ await idbSet(key, value); }
-      else { localStorage.setItem(key, value); }
+      await rawSet(key, value);
+      if (SYNC_KEYS.includes(key)) Sync.queue(key);
       return { key, value, shared: !!shared };
     }catch(e){ return null; }
   },
   async delete(key, shared){
     try{
-      let existed = false;
-      if (hasIDB){
-        existed = (await idbGet(key)) !== undefined;
-        await idbDelete(key);
-      } else {
-        existed = localStorage.getItem(key) !== null;
-        localStorage.removeItem(key);
-      }
+      const existed = (await rawGet(key)) !== undefined;
+      await rawDelete(key);
+      if (SYNC_KEYS.includes(key)) Sync.queue(key);
       return { key, deleted: existed, shared: !!shared };
     }catch(e){ return null; }
   },
@@ -1110,6 +1178,111 @@ window.storage = {
     }catch(e){ return null; }
   }
 };
+
+// ---------- cloud sync (Supabase) ----------
+// Each user's data lives in a table `kv` (user_id, key, value). Row-level security
+// means a signed-in user can only ever read or write their own rows.
+const SUPABASE_READY = !!(window.supabase && !SUPABASE_URL.includes('YOUR-') && !SUPABASE_ANON_KEY.includes('YOUR-'));
+const sb = SUPABASE_READY
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
+  : null;
+let currentUser = null;
+let syncStatus = 'idle'; // idle | saving | saved | offline | error
+
+function updateAccountBar(){
+  const bar = document.getElementById('accountBar');
+  if (bar) bar.hidden = !currentUser;
+}
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  if (confirm('Log out of your account on this device? Your routine stays saved in your account.')) signOut();
+});
+function setSyncStatus(st){
+  syncStatus = st;
+  updateAccountBar();
+  const el = document.getElementById('syncStatus');
+  if (!el || !currentUser) return;
+  const label = { idle: 'Synced', saved: 'Synced', saving: 'Saving…', offline: 'Offline — will sync when back online', error: 'Sync error — will retry' }[st] || '';
+  el.textContent = `${label} · ${currentUser.email}`;
+  el.dataset.state = st;
+}
+
+const Sync = {
+  pending: {},   // key -> change counter (persisted so offline edits survive a restart)
+  timer: null,
+  flushing: false,
+  storeKey(){ return currentUser ? 'sync-pending-' + currentUser.id : null; },
+  loadPending(){
+    try{ this.pending = JSON.parse(localStorage.getItem(this.storeKey()) || '{}') || {}; }catch(e){ this.pending = {}; }
+  },
+  savePending(){
+    try{ localStorage.setItem(this.storeKey(), JSON.stringify(this.pending)); }catch(e){}
+  },
+  queue(key){
+    if (!currentUser) return;
+    this.pending[key] = (this.pending[key] || 0) + 1;
+    this.savePending();
+    clearTimeout(this.timer);
+    if (sb) this.timer = setTimeout(() => this.flush(), 700);
+    else setSyncStatus('offline');
+  },
+  async flush(){
+    if (!currentUser || !sb || this.flushing) return;
+    const keys = Object.keys(this.pending);
+    if (!keys.length){ setSyncStatus('saved'); return; }
+    if (!navigator.onLine){ setSyncStatus('offline'); return; }
+    this.flushing = true;
+    setSyncStatus('saving');
+    try{
+      const stamps = {};
+      const rows = [];
+      for (const k of keys){
+        stamps[k] = this.pending[k];
+        const v = await rawGet(k);
+        rows.push({ user_id: currentUser.id, key: k, value: v === undefined ? null : v, updated_at: new Date().toISOString() });
+      }
+      const { error } = await sb.from('kv').upsert(rows, { onConflict: 'user_id,key' });
+      if (error) throw error;
+      // only clear keys that weren't changed again while we were uploading
+      keys.forEach(k => { if (this.pending[k] === stamps[k]) delete this.pending[k]; });
+      this.savePending();
+      setSyncStatus(Object.keys(this.pending).length ? 'saving' : 'saved');
+    }catch(e){
+      console.error('sync push failed', e);
+      setSyncStatus(navigator.onLine ? 'error' : 'offline');
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.flush(), 15000);
+      this.flushing = false;
+      return;
+    }
+    this.flushing = false;
+    if (Object.keys(this.pending).length) this.flush();
+  },
+  // Downloads the account's data into local storage. Keys with unsent local edits are skipped
+  // (the local edit is newer and will be pushed). Returns { changed, count }.
+  async pull(){
+    const { data, error } = await sb.from('kv').select('key,value').eq('user_id', currentUser.id);
+    if (error) throw error;
+    let changed = false;
+    for (const row of data){
+      if (!SYNC_KEYS.includes(row.key) || this.pending[row.key]) continue;
+      const local = await rawGet(row.key);
+      if (row.value === null){
+        if (local !== undefined){ await rawDelete(row.key); changed = true; }
+      } else if (local !== row.value){
+        await rawSet(row.key, row.value); changed = true;
+      }
+    }
+    return { changed, count: data.length, keys: data.map(r => r.key) };
+  }
+};
+
+async function localHasData(){
+  for (const k of SYNC_KEYS){ if ((await rawGet(k)) !== undefined) return true; }
+  return false;
+}
+async function clearLocalData(){
+  for (const k of SYNC_KEYS){ try{ await rawDelete(k); }catch(e){} }
+}
 
 // Best-effort request to protect this site's storage from iOS eviction.
 if (navigator.storage && navigator.storage.persist){
@@ -1327,7 +1500,7 @@ async function saveLinkHistory(){
   try{ await window.storage.set('link-history', JSON.stringify(linkHistory), false); }
   catch(e){ console.error('storage error', e); }
 }
-const BACKUP_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'link-history', 'weight-entries', 'todo-list', 'todo-lists', 'todo-done-log'];
+const BACKUP_KEYS = ['calendar-feeds', 'routine-steps', 'skill-notes', 'completions', 'completion-history', 'link-history', 'weight-entries', 'todo-list', 'todo-lists', 'todo-done-log'];
 
 async function exportBackup(){
   const data = {};
@@ -1358,15 +1531,7 @@ async function importBackup(file){
         await window.storage.set(k, data[k], false);
       }
     }
-    STEPS = await loadSteps();
-    skillNotes = await loadSkillNotes();
-    completions = await loadCompletions();
-    history = await loadHistory();
-    linkHistory = await loadLinkHistory();
-    todos = await loadTodos();
-    doneLog = await loadDoneLog();
-    const loadedLists = await loadTodoLists();
-    if (loadedLists) todoLists = loadedLists;
+    await loadAllState();
     view = 'grid';
     render();
   }catch(e){
@@ -2272,6 +2437,7 @@ function renderCalendarHTML(){
       <span class="cal-hijri">${hijriPart(d, 'day', { day: 'numeric' })}</span>
       <span class="cal-num">${d.getDate()}</span>
       <span class="cal-pct">${pct != null ? pct + '%' : ''}</span>
+      ${calEventDotsHTML(k)}
     </div>`;
   }).join('');
   const offset = calExpanded ? calMonthOffset : calWeekOffset;
@@ -2684,6 +2850,7 @@ function renderGrid(){
       <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No windows yet — add the first one below.")}</p>
     </div>
     ${renderCalendarHTML()}
+    ${renderEventsBlock(viewingDate || todayKey())}
     ${viewingDate
       ? (viewingDate < todayKey() ? renderPastDayPanel(viewingDate) : renderTodayPanel(pinnedLists[0] || null, viewingDate))
       : pinnedLists.map(l => renderTodayPanel(l)).join('')}
@@ -2801,8 +2968,13 @@ async function finishTileResize(kind, id, span){
   }
   render();
 }
+let lastLayoutWidth = window.innerWidth;
 window.addEventListener('resize', ()=>{
-  if (view === 'grid') render();
+  if (window.innerWidth === lastLayoutWidth) return; // height-only changes = on-screen keyboard
+  lastLayoutWidth = window.innerWidth;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
+  if (view === 'grid' && currentUser) render();
 });
 
 // ---------- inline grid reorder (long-press + drag directly on the tiles) ----------
@@ -3707,8 +3879,10 @@ function renderOuterActions(){
       <button class="outer-btn" id="addTodoListOuterBtn">+ Add a to-do-list</button>
       <button class="outer-btn" id="reorderOuterBtn">⇅ Reorder windows</button>
       <button class="outer-btn" id="progressOuterBtn">📈 Progress</button>
+      <button class="outer-btn" id="calendarsOuterBtn">📅 iPhone calendar</button>
       <button class="outer-btn" id="backupOuterBtn">⬇ Backup</button>
       <button class="outer-btn" id="restoreOuterBtn">⬆ Restore</button>
+      <button class="outer-btn danger" id="signOutOuterBtn">⎋ Log out</button>
       <input type="file" id="restoreFileInput" accept="application/json" style="display:none">
     `;
     document.getElementById('optionsToggleBtn').addEventListener('click', toggleOptions);
@@ -3716,7 +3890,9 @@ function renderOuterActions(){
     document.getElementById('addTodoListOuterBtn').addEventListener('click', ()=>{ view = 'addTodoList'; render(); });
     document.getElementById('reorderOuterBtn').addEventListener('click', ()=>{ view = 'manage'; render(); });
     document.getElementById('progressOuterBtn').addEventListener('click', ()=>{ view = 'progress'; render(); });
+    document.getElementById('calendarsOuterBtn').addEventListener('click', ()=>{ view = 'calendars'; render(); });
     document.getElementById('backupOuterBtn').addEventListener('click', exportBackup);
+    document.getElementById('signOutOuterBtn').addEventListener('click', signOut);
     document.getElementById('restoreOuterBtn').addEventListener('click', ()=>{
       document.getElementById('restoreFileInput').click();
     });
@@ -3787,6 +3963,7 @@ function renderOuterActions(){
 
 // ---------- master render ----------
 async function render(){
+  if (!currentUser){ if (document.getElementById('authForm')) return; if (sb) renderAuth(authMode); else renderSetupNeeded(); return; }
   ensureToday();
   setProgress();
 
@@ -3794,6 +3971,13 @@ async function render(){
     stepLabel.textContent = 'Reorder & manage';
     renderManageScreen();
     renderManageNav();
+    outerActions.innerHTML = '';
+    return;
+  }
+
+  if (view === 'calendars'){
+    stepLabel.textContent = 'iPhone calendar';
+    renderCalendarsScreen();
     outerActions.innerHTML = '';
     return;
   }
@@ -3857,21 +4041,8 @@ async function render(){
   renderOuterActions();
 }
 
-// Starting content for a fresh browser (from backup of 2026-11-04).
-// Only used when this browser has no saved data yet — it never overwrites existing data.
-const SEED_BACKUP = {"routine-steps": "[{\"id\":\"athkar\",\"iconKey\":\"beads\",\"title\":\"🕋 Spiritual Dimensions\",\"sub\":\"\",\"links\":[{\"label\":\"تصلي كل الصلوات في وقتها اول ما تخش بالضبط !\",\"url\":\"\",\"primary\":true,\"schedule\":null},{\"label\":\"اذكار الصباح\",\"url\":\"https://apps.apple.com/sa/app/golden-quran-%D8%A7%D9%84%D9%85%D8%B5%D8%AD%D9%81-%D8%A7%D9%84%D8%B0%D9%87%D8%A8%D9%8A/id852497554\",\"primary\":false,\"schedule\":null},{\"label\":\"الصدقه كل جمعه\",\"url\":\"\",\"primary\":false,\"schedule\":{\"days\":[5]}},{\"label\":\"استغفرالله من الغيبة والنميمة/الكذب/تأخير الصلاة/إطلاق البصر/سوء الظن/سماع الاغاني/السخرية/عقوق الوالدين/الإسراف/اللعن والسب/الرياء/إضاعة الوقت\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"اذكار بعد الصلاه\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"القران الكريم\",\"url\":\"https://apps.apple.com/sa/app/tarteel-ai-quran-memorisation/id1391009396\",\"primary\":false,\"schedule\":null},{\"label\":\"١٥ د من احاديث من البخاري\",\"url\":\"https://youtube.com/playlist?list=PLx3Fh1kiMbreuujEdAWkdjuDe9V_asB99&si=o7S8l0_bZkFBtyLp\",\"primary\":false,\"schedule\":null},{\"label\":\"استغفرالله ١٠٠ مره\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"الوتر\",\"url\":\"--\",\"primary\":false,\"schedule\":null},{\"label\":\"دعاء\",\"url\":\"دعاء\",\"primary\":false,\"schedule\":null},{\"label\":\"الضحى\",\"url\":\"--\",\"primary\":false,\"schedule\":null},{\"label\":\"الصوم\",\"url\":\"-\",\"primary\":false,\"schedule\":{\"days\":[0,1,3,4]}}],\"schedule\":null,\"widgetSpan\":1},{\"id\":\"talk\",\"iconKey\":\"custom\",\"title\":\"🔋My Identity\",\"sub\":\"\",\"links\":[{\"label\":\"اتق الله ونم بدري\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"هدفي الاسمى الجنه ولكني اسعى واتطور كل يوم\",\"url\":\"-\",\"primary\":true,\"schedule\":null},{\"label\":\"كل ماتفعله من اجل ربي\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"- يا غُلامُ إنِّي أعلِّمُكَ كلِماتٍ ، احفَظِ اللَّهَ يحفَظكَ ، احفَظِ اللَّهَ تَجِدْهُ تجاهَكَ ، إذا سأَلتَ فاسألِ اللَّهَ ، وإذا استعَنتَ فاستَعِن باللَّهِ ، واعلَم أنَّ الأمَّةَ لو اجتَمعت علَى أن ينفَعوكَ بشَيءٍ لم يَنفعوكَ إلَّا بشيءٍ قد كتبَهُ اللَّهُ لَكَ ، ولو اجتَمَعوا على أن يضرُّوكَ بشَيءٍ لم يَضرُّوكَ إلَّا بشيءٍ قد كتبَهُ اللَّهُ عليكَ ، رُفِعَتِ الأقلامُ وجفَّتِ الصُّحفُ\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"بَلَىٰۚ مَنۡ أَسۡلَمَ وَجۡهَهُۥ لِلَّهِ وَهُوَ مُحۡسِنٞ فَلَهُۥٓ أَجۡرُهُۥ عِندَ رَبِّهِۦ وَلَا خَوۡفٌ عَلَيۡهِمۡ وَلَا هُمۡ يَحۡزَنُونَ\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"إِنَّ الَّذِينَ قَالُوا رَبُّنَا اللَّهُ ثُمَّ اسْتَقَامُوا تَتَنَزَّلُ عَلَيْهِمُ الْمَلَائِكَةُ أَلَّا تَخَافُوا وَلَا تَحْزَنُوا وَأَبْشِرُوا بِالْجَنَّةِ الَّتِي كُنتُمْ تُوعَدُونَ\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"﴿فَمَنِ اتَّبَعَ هُدَايَ فَلَا يَضِلُّ وَلَا يَشْقَى﴾\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"مخالفة الهوى تورث العبد قوة في بدنه وقلبه ولسانه\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"الايمان يزيد بالطاعه وينقص بالمعصية\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُواْ ٱسۡتَعِينُواْ بِٱلصَّبۡرِ وَٱلصَّلَوٰةِۚ إِنَّ ٱللَّهَ مَعَ ٱلصَّٰبِرِينَ\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"تُعرَضُ الفِتَنُ على القُلوبِ عَرْضَ الحَصِيرِ عُودًا عُودًا ، فأيُّ قلبٍ أُشْرِبَها نُكِتَتْ فيه نُكتةٌ سَوداءُ ، وأيُّ قلبٍ أنْكَرَها نُكِتَتْ فيه نُكتةٌ بيضاءُ ، حتى يصِيرَ القلبُ أبيضَ مثلَ الصَّفا ، لا تَضُرُّه فِتنةٌ ما دامَتِ السمواتُ والأرضُ ، والآخَرُ أسودَ مُربَدًّا كالكُوزِ مُجَخِّيًا ، لا يَعرِفُ مَعروفًا ، ولا يُنكِرُ مُنكَرًا ، إلا ما أُشْرِبَ من هَواه\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"{إِنَّ الَّذِينَ اتَّقَوْا إِذَا مَسَّهُمْ طَائِفٌ مِنَ الشَّيْطَانِ تَذَكَّرُوا فَإِذَا هُمْ مُبْصِرُونَ}\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"توكل على الله، استجابتك لاي حدث تغير كل شيء\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"المزاج لا يوثر على وقت العمل او الروتين ، ربما يوثر على الاداء قليلا\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"حسن الخلق من اجل ربي والجنه\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"وَأَمَّا مَنۡ خَافَ مَقَامَ رَبِّهِۦ وَنَهَى ٱلنَّفۡسَ عَنِ ٱلۡهَوَىٰ (٤٠)\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"وَٱلَّذِينَ يَقُولُونَ رَبَّنَا هَبۡ لَنَا مِنۡ أَزۡوَٰجِنَا وَذُرِّيَّٰتِنَا قُرَّةَ أَعۡيُنٖ وَٱجۡعَلۡنَا لِلۡمُتَّقِينَ إِمَامًا\",\"url\":\"-\",\"primary\":false,\"schedule\":null}],\"schedule\":null,\"widgetSpan\":1},{\"id\":\"stocks\",\"iconKey\":\"custom\",\"title\":\"📈 Financial Live\",\"sub\":\"See how your portfolio is doing today.\",\"links\":[{\"label\":\"Stock market\",\"url\":\"https://apps.apple.com/sa/app/sahm-stock-trading/id1630074503\",\"primary\":true,\"schedule\":{\"days\":[1,2,3,4,5]}},{\"label\":\"Pay with minimal amount, and add as it is decreasing in price.\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"Read about stocks\",\"url\":\"-\",\"primary\":false,\"schedule\":{\"days\":[1,2,3,4,5]}}],\"schedule\":{\"days\":[1,2,3,4,5]},\"widgetSpan\":1},{\"id\":\"calendar\",\"iconKey\":\"calendar\",\"title\":\"🗓️ Professional Live\",\"sub\":\"\",\"links\":[{\"label\":\"Calendar\",\"url\":\"https://apps.apple.com/sa/app/calendar/id1108185179\",\"primary\":true,\"schedule\":null},{\"label\":\"Personal Mail\",\"url\":\"https://apps.apple.com/sa/app/mail/id1108187098\",\"primary\":false,\"schedule\":null},{\"label\":\"Oxford Mail\",\"url\":\"https://apps.apple.com/app/id951937596\",\"primary\":false,\"schedule\":{\"days\":[1,2,3,4,5]}},{\"label\":\"Materials Nature\",\"url\":\"https://www.nature.com/nmat/?utm_source=chatgpt.com\",\"primary\":false,\"schedule\":{\"days\":[1,5]}},{\"label\":\"AI google courses\",\"url\":\"https://developers.google.com/machine-learning/crash-course?utm_source=chatgpt.com\",\"primary\":false,\"schedule\":{\"days\":[2]}},{\"label\":\"3D printing Filed\",\"url\":\"-\",\"primary\":false,\"schedule\":{\"days\":[3]}},{\"label\":\"Hydrogen Field\",\"url\":\"-\",\"primary\":false,\"schedule\":{\"days\":[4]}},{\"label\":\"Origin Python\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"EBSD map\",\"url\":\"-\",\"primary\":false,\"schedule\":null}],\"schedule\":null,\"widgetSpan\":1},{\"id\":\"custom-weight-msqllgua\",\"iconKey\":\"custom\",\"title\":\"🍉 Phyisical Dimentions\",\"sub\":\"\",\"links\":[{\"label\":\"Early wake up\",\"url\":\"-\",\"primary\":true,\"schedule\":null},{\"label\":\"Drink water\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"Log body’s Weight\",\"url\":\"https://apps.apple.com/sa/app/renpho-health/id1543340610\",\"primary\":false,\"schedule\":null},{\"label\":\"No coffee after 10 am\",\"url\":\"--\",\"primary\":false,\"schedule\":null},{\"label\":\"Gym\",\"url\":\"https://plate-plan-maker.vercel.app/\",\"primary\":false,\"schedule\":null},{\"label\":\"Walk 10000 steps\",\"url\":\"https://apps.apple.com/sa/app/pedometer/id712286167\",\"primary\":false,\"schedule\":null},{\"label\":\"Sleep Early, Magnesium\",\"url\":\"-\",\"primary\":false,\"schedule\":null}],\"schedule\":null,\"widgetSpan\":1},{\"id\":\"reading\",\"iconKey\":\"book\",\"title\":\"📖 Summary of one Book per week\",\"sub\":\"Read at least 5 pages of a book.\",\"links\":[{\"label\":\"7 habits of Highly effected people\",\"url\":\"--\",\"primary\":true,\"schedule\":null},{\"label\":\"Somthing about how to speek\",\"url\":\"https://youtu.be/v0ZBldT7cJg?is=NWd8WHKwzxt5q5MC\",\"primary\":false,\"schedule\":null},{\"label\":\"كيف تتعامل مع الناس وتكسب الاصدقاء\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"كيف تتحدث امام الناس خطوات (مقطع اليوتيووب )\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"How to memorize everything\",\"url\":\"\",\"primary\":false,\"schedule\":null}],\"schedule\":{\"days\":[6]},\"widgetSpan\":1},{\"id\":\"custom-sunday-reset-mstgie0x\",\"iconKey\":\"custom\",\"title\":\"Sunday Reset !\",\"sub\":\"\",\"links\":[{\"label\":\"Eat/Home Grocery\",\"url\":\"\",\"primary\":false},{\"label\":\"Week Shower  hair/nails/under arms)\",\"url\":\"\",\"primary\":true},{\"label\":\"Organise the wardrobe\",\"url\":\"\",\"primary\":false},{\"label\":\"Vacuum the floor\",\"url\":\"\",\"primary\":false},{\"label\":\"Do the laundry\",\"url\":\"\",\"primary\":false}],\"schedule\":{\"days\":[0]}},{\"id\":\"podcast\",\"iconKey\":\"headphones\",\"title\":\"☕️ Daily Skills\",\"sub\":\"Listen to an English-language podcast to keep your ear tuned.\",\"links\":[{\"label\":\"⚫️ BBC Businesses\",\"url\":\"https://podcasts.apple.com/sa/podcast/business-daily/id261786876\",\"primary\":true,\"schedule\":{\"days\":[4]}},{\"label\":\"🟡 English Businesses\",\"url\":\"https://podcasts.apple.com/sa/podcast/business-english-from-all-ears-english/id1650591741\",\"primary\":false,\"schedule\":{\"days\":[2]}},{\"label\":\"⚪️ English speaking practice\",\"url\":\"https://chatgpt.com/g/g-p-698dc7995f2c8191841e3fbd133ac12b\",\"primary\":false,\"schedule\":{\"days\":[1,5]}},{\"label\":\"🔵 Translation\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"التعلق القلق\",\"url\":\"\",\"primary\":false,\"schedule\":null},{\"label\":\"الاداره والقياده\",\"url\":\"\",\"primary\":false,\"schedule\":null}],\"schedule\":null},{\"id\":\"alarabiya\",\"iconKey\":\"news\",\"title\":\"📰 FUN\",\"sub\":\"A second angle on today's news.\",\"links\":[{\"label\":\"365 Today Matches\",\"url\":\"https://apps.apple.com/sa/app/365scores-live-scores-news/id571801488\",\"primary\":true,\"schedule\":null},{\"label\":\"Twitter news ! Football\",\"url\":\"https://apps.apple.com/sa/app/x/id333903271\",\"primary\":false,\"schedule\":null},{\"label\":\"Snap Highlight\",\"url\":\"https://snapchat.com/t/qf4IFuyo\",\"primary\":false,\"schedule\":null},{\"label\":\"PL FANTASY\",\"url\":\"https://apps.apple.com/app/id1138895159\",\"primary\":false,\"schedule\":{\"days\":[0,4,5,6]}},{\"label\":\"Watch YouTube\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"PS5\",\"url\":\"-\",\"primary\":false,\"schedule\":null}],\"schedule\":null,\"widgetSpan\":1},{\"id\":\"custom-general-personal-relationships-mtq6d9tn\",\"iconKey\":\"custom\",\"title\":\"🏠 Family & Social Live\",\"sub\":\"\",\"links\":[{\"label\":\"لا تشتكي ابد !\",\"url\":\"\",\"primary\":true,\"schedule\":null},{\"label\":\"اسمع جيدا وافهم اولا !\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"لا تنتقد، ولا تُدِن، ولا تشتكِ\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"تكلم اقل ! لاتحول الكلام عنك!\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"قدِّم تقديرًا صادقًا\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"أظهر اهتماماً صادقاً بالآخرين\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"اجعل الشخص الاخر مهمًا !\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"Razan/Mama&Baba/Brothers/Friends\",\"url\":\"-\",\"primary\":false,\"schedule\":null}],\"schedule\":null},{\"id\":\"custom-razan-mw1ca4f7\",\"iconKey\":\"custom\",\"title\":\"Razan\",\"sub\":\"\",\"links\":[{\"label\":\"إِنَّ الَّذِينَ اتَّقَوْا إِذَا مَسَّهُمْ طَائِفُ مِنَ} {الشَّيْطَانِ تَذَكَّرُوا فَإِذَا هُمْ مُبْصِرُونَ\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"إنما المرأة كالضلع. قال المهلب: المداراة أصل الألفة، واستمالة النفوس؛ من أجل ما جبل الله عليه خلقه وطبعهم من اختلاف الأخلاق\",\"url\":\"-\",\"primary\":true,\"schedule\":null},{\"label\":\"إن المرأة خلقت من ضلع, وإنك إن ترد إقامة الضلع تكسرها, فدارها تعش بها.\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"(وَعَاشِرُوهُنَّ بِالْمَعْرُوفِ)\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\": خياركم خياركم لنسائهم\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"آية حسن العشرة والصبر: قول الله تعالى: ﴿وَعَاشِرُوهُنَّ بِالْمَعْرُوفِ ۚ فَإِنْ كَرِهْتُمُوهُنَّ فَعَسَى أَنْ تَكْرَهُوا شَيْئًا وَيَجْعَلَ اللَّهُ فِيهِ خَيْرًا كَثِيرًا﴾ [سورة النساء: 19]\",\"url\":\"-\",\"primary\":false,\"schedule\":null},{\"label\":\"ومن ذا الذي ترضى سجاياه كلها ... كفى المرء نبلا أن تعد معايبه\",\"url\":\"-\",\"primary\":false,\"schedule\":null}],\"schedule\":{\"days\":[1,2,3,4,5,6]}}]", "skill-notes": "{\"athkar\":\"أبدأ يومي بأذكار الصباح لأشحن نفسي روحيًا وأحافظ على صلتي بالله قبل أي شيء آخر.\",\"stocks\":\"أتابع أسهمي واستثماراتي يوميًا لأبقى مطلعًا على أدائها واتخاذ قرارات مدروسة.\",\"podcast\":\"أستمع إلى بودكاست باللغة الإنجليزية يوميًا لتحسين مهارتي في الاستماع والتعرّض المستمر للغة.\",\"reading\":\"أقرأ 5 صفحات على الأقل يوميًا من كتاب لتوسيع معرفتي وبناء عادة القراءة المستمرة.\",\"alarabiya\":\"أتابع أهم الأخبار المحلية والعالمية يوميًا لأبقى مطلعًا وواعيًا بما يحدث حولي في العالم.\",\"calendar\":\"أراجع مواعيدي واجتماعاتي لهذا اليوم لأنظّم وقتي وأبدأ يومي بخطة واضحة.\",\"talk\":\"أتواصل مع شخص مقرب يوميًا للحفاظ على علاقاتي الاجتماعية وعدم الانعزال.\"}", "completions": "{\"day\":\"2026-11-04\",\"done\":{\"athkar\":false,\"talk\":false,\"stocks\":false,\"calendar\":false,\"custom-weight-msqllgua\":false,\"alarabiya\":false,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-razan-mw1ca4f7\":true},\"links\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":true},\"talk\":{\"0\":false,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":false,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true},\"custom-razan-mw1ca4f7\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true},\"alarabiya\":{\"0\":true,\"2\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true}}}", "completion-history": "{\"2026-08-13\":{\"athkar\":true,\"talk\":true,\"bills\":true,\"alarabiya\":true,\"calendar\":true,\"stocks\":true,\"podcast\":true,\"custom-today-need-done-mss0gdc3\":true},\"2026-08-14\":{\"athkar\":true,\"calendar\":true,\"bills\":true,\"alarabiya\":true,\"stocks\":true,\"podcast\":true,\"talk\":true,\"reading\":true,\"custom-weight-msqllgua\":true},\"2026-08-15\":{\"athkar\":true,\"calendar\":true,\"stocks\":true},\"2026-08-16\":{\"athkar\":true,\"stocks\":true,\"reading\":true,\"calendar\":true,\"alarabiya\":true},\"2026-08-22\":{\"reading\":true,\"talk\":true,\"calendar\":true},\"2026-08-23\":{\"calendar\":true,\"talk\":true,\"podcast\":true},\"2026-08-24\":{\"talk\":true,\"calendar\":true,\"stocks\":true,\"podcast\":true,\"alarabiya\":true,\"athkar\":true},\"2026-08-25\":{\"talk\":true,\"calendar\":true,\"stocks\":true,\"alarabiya\":true},\"2026-08-26\":{\"talk\":true,\"calendar\":true,\"stocks\":true},\"2026-08-27\":{\"custom-razan-mtavj8fx\":true,\"custom-talk-skilss-mtbqxwza\":true,\"talk\":true,\"calendar\":true,\"stocks\":true},\"2026-08-28\":{\"talk\":true,\"custom-talk-skilss-mtbqxwza\":true,\"calendar\":true,\"custom-razan-mtavj8fx\":true,\"stocks\":true,\"alarabiya\":true},\"2026-08-29\":{\"talk\":true,\"calendar\":true,\"custom-talk-skilss-mtbqxwza\":true,\"custom-razan-mtavj8fx\":true,\"podcast\":true,\"reading\":true},\"2026-08-30\":{\"talk\":true,\"calendar\":true,\"custom-talk-skilss-mtbqxwza\":true},\"2026-08-31\":{\"talk\":true},\"2026-09-01\":{\"talk\":true,\"stocks\":true,\"calendar\":true},\"2026-09-02\":{\"talk\":true,\"stocks\":true},\"2026-09-03\":{\"talk\":true},\"2026-09-04\":{\"talk\":true,\"podcast\":true,\"stocks\":true,\"calendar\":true},\"2026-09-05\":{\"talk\":true,\"calendar\":true,\"custom-weight-msqllgua\":true,\"alarabiya\":true},\"2026-09-06\":{\"custom-family-social-live-mtknntjx\":true,\"talk\":true,\"custom-weight-msqllgua\":true,\"calendar\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"podcast\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-sunday-reset-mstgie0x\":true,\"athkar\":true},\"2026-09-07\":{\"talk\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"stocks\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-09-08\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"calendar\":true,\"stocks\":true,\"athkar\":true},\"2026-09-09\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true},\"2026-09-10\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"athkar\":true},\"2026-09-11\":{\"talk\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"stocks\":true},\"2026-09-12\":{\"talk\":true,\"calendar\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-09-13\":{\"talk\":true,\"calendar\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-09-14\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"stocks\":true},\"2026-09-15\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"stocks\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-09-16\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true,\"alarabiya\":true,\"podcast\":true},\"2026-09-17\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-09-18\":{\"talk\":true,\"stocks\":true},\"2026-09-19\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"calendar\":true,\"reading\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-09-20\":{\"custom-family-social-live-mtknntjx\":true,\"calendar\":true},\"2026-09-22\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"alarabiya\":true},\"2026-09-23\":{\"custom-family-social-live-mtknntjx\":true,\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"stocks\":true},\"2026-09-24\":{\"custom-family-social-live-mtknntjx\":true,\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true},\"2026-09-25\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"alarabiya\":true,\"podcast\":true,\"stocks\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-09-26\":{\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"calendar\":true},\"2026-09-27\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"calendar\":true,\"custom-sunday-reset-mstgie0x\":true,\"podcast\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"alarabiya\":true},\"2026-09-28\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-09-29\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"alarabiya\":true,\"stocks\":true},\"2026-09-30\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"calendar\":true,\"stocks\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-10-01\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-weight-msqllgua\":true},\"2026-10-02\":{\"custom-family-social-live-mtknntjx\":true,\"talk\":true},\"2026-10-03\":{},\"2026-10-04\":{},\"2026-10-05\":{},\"2026-10-06\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-07\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true},\"2026-10-08\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true},\"2026-10-09\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-12\":{},\"2026-10-13\":{\"talk\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-family-social-live-mtknntjx\":true,\"stocks\":true},\"2026-10-14\":{\"talk\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-15\":{\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-16\":{\"custom-family-social-live-mtknntjx\":true,\"stocks\":true},\"2026-10-17\":{\"talk\":true,\"calendar\":true,\"custom-family-social-live-mtknntjx\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-18\":{\"talk\":true,\"calendar\":true,\"podcast\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-19\":{},\"2026-10-20\":{},\"2026-10-21\":{\"talk\":true,\"stocks\":true,\"podcast\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-22\":{\"talk\":true,\"stocks\":true,\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-general-advice-for-personality-mtq9weaw\":true},\"2026-10-23\":{\"talk\":true,\"stocks\":true,\"podcast\":true,\"custom-general-advice-for-personality-mtq9weaw\":true,\"custom-general-personal-relationships-mtq6d9tn\":true},\"2026-10-26\":{\"talk\":true},\"2026-10-27\":{\"stocks\":true,\"talk\":true},\"2026-10-29\":{\"talk\":true,\"stocks\":true},\"2026-10-30\":{},\"2026-11-01\":{\"talk\":true},\"2026-11-02\":{\"talk\":true,\"stocks\":true,\"custom-general-personal-relationships-mtq6d9tn\":true},\"2026-11-03\":{\"talk\":true,\"stocks\":true},\"2026-11-04\":{\"custom-general-personal-relationships-mtq6d9tn\":true,\"custom-razan-mw1ca4f7\":true}}", "link-history": "{\"2026-09-03\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"calendar\":{\"0\":true,\"1\":false,\"2\":true,\"6\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":true,\"3\":false,\"4\":false},\"stocks\":{\"0\":true,\"1\":false},\"podcast\":{\"0\":false,\"3\":true,\"4\":true}},\"2026-09-04\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":false,\"10\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"stocks\":{\"0\":true,\"1\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"custom-family-social-live-mtknntjx\":{\"0\":false,\"1\":true,\"3\":true},\"podcast\":{\"2\":true,\"3\":true,\"4\":true},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":true,\"3\":false}},\"2026-09-05\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-family-social-live-mtknntjx\":{\"0\":false,\"2\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"reading\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"alarabiya\":{\"0\":true,\"1\":true}},\"2026-09-06\":{\"podcast\":{\"3\":true,\"5\":true},\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-sunday-reset-mstgie0x\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"calendar\":{\"0\":true,\"1\":true},\"alarabiya\":{\"0\":true,\"1\":false,\"3\":false,\"4\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true}},\"2026-09-07\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false},\"stocks\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true},\"podcast\":{\"2\":false,\"3\":true,\"4\":false}},\"2026-09-08\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"stocks\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"podcast\":{\"1\":false,\"3\":true,\"4\":false}},\"2026-09-09\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"3\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"podcast\":{\"2\":true,\"3\":true,\"4\":false}},\"2026-09-10\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"podcast\":{\"0\":true,\"3\":true,\"4\":false}},\"2026-09-11\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"podcast\":{\"2\":false,\"3\":true,\"4\":false}},\"2026-09-12\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":false,\"11\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"podcast\":{\"3\":true,\"4\":false}},\"2026-09-13\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":true,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":true},\"podcast\":{\"3\":true,\"4\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true}},\"2026-09-14\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"alarabiya\":{\"0\":true,\"1\":false,\"4\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false}},\"2026-09-15\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":true,\"6\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"podcast\":{\"1\":false,\"3\":true,\"4\":false},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-09-16\":{\"athkar\":{\"0\":true,\"1\":false,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":false,\"11\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"3\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"alarabiya\":{\"0\":true,\"1\":true},\"podcast\":{\"2\":true,\"3\":true,\"4\":true}},\"2026-09-17\":{\"athkar\":{\"0\":true,\"1\":false,\"2\":true,\"3\":true,\"4\":false,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-09-18\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false,\"12\":false,\"13\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":false,\"3\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false}},\"2026-09-19\":{\"athkar\":{\"0\":false,\"1\":false,\"2\":false,\"3\":true,\"4\":false,\"5\":true,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false,\"13\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false},\"reading\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"podcast\":{\"3\":true,\"4\":false},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-09-20\":{\"athkar\":{\"0\":true,\"1\":false,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false,\"13\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"calendar\":{\"0\":true,\"1\":true}},\"2026-09-22\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"8\":true,\"9\":false,\"12\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"stocks\":{\"0\":true,\"1\":false,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"1\":true,\"3\":true,\"4\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"3\":true}},\"2026-09-23\":{\"athkar\":{\"0\":false,\"1\":false,\"2\":true,\"3\":false,\"4\":false,\"5\":false,\"6\":false,\"8\":false,\"9\":true,\"10\":false,\"12\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"3\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"podcast\":{\"3\":true,\"4\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false}},\"2026-09-24\":{\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"athkar\":{\"0\":false,\"1\":false,\"2\":true,\"3\":false,\"4\":false,\"5\":false,\"6\":true,\"8\":true,\"9\":true,\"10\":false,\"12\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"stocks\":{\"0\":true,\"1\":false,\"2\":false}},\"2026-09-25\":{\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true},\"podcast\":{\"2\":true,\"3\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true,\"3\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"athkar\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":false,\"5\":true,\"6\":true,\"7\":false,\"8\":true,\"9\":true,\"11\":false,\"12\":false}},\"2026-09-26\":{\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"athkar\":{\"0\":false,\"1\":false,\"2\":true,\"3\":true,\"4\":false,\"5\":true,\"6\":true,\"8\":true,\"9\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":false,\"5\":false,\"6\":false}},\"2026-09-27\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"8\":true,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"custom-sunday-reset-mstgie0x\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"podcast\":{\"3\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"2\":true}},\"2026-09-28\":{\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":false,\"1\":false,\"2\":false,\"3\":false,\"4\":false,\"5\":false}},\"2026-09-29\":{\"athkar\":{\"0\":false,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false,\"8\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"3\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true}},\"2026-09-30\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"3\":true}},\"2026-10-01\":{\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"stocks\":{\"0\":true,\"1\":false,\"2\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"podcast\":{\"0\":false,\"3\":true}},\"2026-10-02\":{\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true,\"3\":true},\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true}},\"2026-10-03\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"8\":false,\"9\":false,\"10\":false}},\"2026-10-04\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false}},\"2026-10-05\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"8\":true,\"9\":false,\"10\":false,\"11\":false},\"calendar\":{\"0\":true,\"1\":false,\"2\":true,\"3\":false},\"talk\":{\"0\":false,\"1\":false,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false,\"12\":false,\"13\":false,\"14\":false}},\"2026-10-06\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"8\":false,\"9\":true,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true},\"custom-family-social-live-mtknntjx\":{\"0\":false,\"2\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":false,\"3\":false,\"5\":false}},\"2026-10-07\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"8\":true,\"9\":false,\"10\":false,\"11\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"3\":true},\"stocks\":{\"0\":true,\"1\":false,\"2\":false}},\"2026-10-08\":{\"athkar\":{\"0\":true,\"1\":false,\"2\":false,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-weight-msqllgua\":{\"0\":false,\"1\":true,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false},\"custom-family-social-live-mtknntjx\":{\"0\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true}},\"2026-10-09\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"2\":false,\"3\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-10-12\":{\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false}},\"2026-10-13\":{\"athkar\":{\"0\":true,\"1\":false,\"2\":false,\"3\":true,\"4\":true,\"5\":true,\"6\":false,\"8\":true,\"9\":false,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true,\"4\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false}},\"2026-10-14\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":true,\"5\":true,\"6\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"3\":true,\"4\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-10-15\":{\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"athkar\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":true,\"5\":true,\"6\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":false,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":false,\"13\":false,\"14\":true,\"15\":true,\"16\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-10-16\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":false,\"8\":false,\"9\":false,\"10\":false},\"talk\":{\"0\":false,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false}},\"2026-10-17\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":false,\"4\":true,\"5\":true,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"calendar\":{\"0\":true,\"1\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"2\":true,\"4\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"3\":true,\"4\":false},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":false,\"5\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-10-18\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"custom-family-social-live-mtknntjx\":{\"0\":true,\"4\":false},\"calendar\":{\"0\":true,\"1\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"custom-sunday-reset-mstgie0x\":{\"0\":true,\"1\":false,\"2\":false,\"3\":false,\"4\":false},\"podcast\":{\"3\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true}},\"2026-10-19\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":false,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":true,\"1\":false,\"2\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false}},\"2026-10-20\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":false,\"5\":true,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false}},\"2026-10-21\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":false,\"5\":true,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":false,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"3\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"2\":false,\"4\":false,\"5\":false}},\"2026-10-22\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":false,\"3\":false,\"4\":false,\"5\":false}},\"2026-10-23\":{\"athkar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":false,\"8\":false,\"9\":false,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"2\":true,\"3\":true},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":false,\"3\":true,\"4\":false,\"5\":false},\"custom-general-advice-for-personality-mtq9weaw\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true}},\"2026-10-26\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"calendar\":{\"0\":true,\"1\":false,\"2\":false,\"3\":false,\"7\":false,\"8\":false},\"stocks\":{\"0\":false,\"1\":true,\"2\":true}},\"2026-10-27\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false,\"7\":false,\"8\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true}},\"2026-10-29\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"6\":false,\"7\":false,\"8\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"0\":false,\"3\":true},\"alarabiya\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false,\"4\":false,\"5\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":false}},\"2026-10-30\":{\"athkar\":{\"0\":true,\"1\":false,\"2\":true,\"3\":false,\"4\":false,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false}},\"2026-11-01\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"calendar\":{\"0\":true,\"1\":true,\"7\":false,\"8\":false}},\"2026-11-02\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"7\":false,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"3\":false,\"7\":false,\"8\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":false,\"2\":false,\"3\":false,\"4\":true,\"5\":true,\"6\":true},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":false,\"4\":false,\"5\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true}},\"2026-11-03\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":true,\"7\":false,\"8\":false,\"9\":false,\"10\":false},\"talk\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"4\":false,\"7\":false,\"8\":false},\"stocks\":{\"0\":true,\"1\":true,\"2\":true},\"custom-weight-msqllgua\":{\"0\":true,\"1\":false,\"2\":false,\"3\":true,\"4\":false,\"5\":false,\"6\":false},\"podcast\":{\"1\":false,\"3\":true}},\"2026-11-04\":{\"athkar\":{\"0\":true,\"1\":true,\"3\":true,\"4\":true,\"5\":false,\"6\":false,\"7\":true,\"8\":false,\"9\":false,\"10\":false,\"11\":false},\"talk\":{\"0\":false,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true,\"8\":true,\"9\":true,\"10\":true,\"11\":true,\"12\":true,\"13\":true,\"14\":true,\"15\":true,\"16\":true},\"stocks\":{\"0\":false,\"1\":true,\"2\":true},\"calendar\":{\"0\":true,\"1\":true,\"2\":true,\"5\":false,\"7\":false,\"8\":false},\"custom-weight-msqllgua\":{\"0\":true,\"1\":true,\"2\":false,\"3\":false,\"4\":false,\"5\":false,\"6\":false},\"alarabiya\":{\"0\":true,\"1\":false,\"2\":true,\"4\":false,\"5\":false},\"custom-general-personal-relationships-mtq6d9tn\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true,\"7\":true},\"custom-razan-mw1ca4f7\":{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"5\":true,\"6\":true}}}", "todo-list": "[{\"id\":\"todo-mterddix3sb4\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Padel\",\"color\":\"#FF7A59\",\"done\":false,\"order\":0},{\"id\":\"todo-mterdi9tinpy\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Football\",\"color\":\"#5B8DBE\",\"done\":false,\"order\":1},{\"id\":\"todo-mtere3i7vljj\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"St cross common room\",\"color\":\"#8B7BC9\",\"done\":false,\"order\":3},{\"id\":\"todo-muer32n2s3q0\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Gym\",\"color\":\"#FF7A59\",\"done\":false,\"order\":4},{\"id\":\"todo-muer35uyy75j\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Design\",\"color\":\"#FF7A59\",\"done\":false,\"order\":5},{\"id\":\"todo-muer3b63d9x3\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Camera\",\"color\":\"#FF7A59\",\"done\":false,\"order\":6},{\"id\":\"todo-muer3dfw1ul6\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Travel\",\"color\":\"#FF7A59\",\"done\":false,\"order\":7},{\"id\":\"todo-mv3sak2iomwj\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"استرجاع اميال طيران\",\"color\":\"#FF7A59\",\"done\":false,\"order\":9},{\"id\":\"todo-mva6rntgv2o4\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"_____________\",\"color\":\"#5B8DBE\",\"done\":false,\"order\":6},{\"id\":\"todo-mvaz7q3qg3ma\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"شنط نفك\",\"color\":\"#FF7A59\",\"done\":false,\"order\":4},{\"id\":\"todo-mvbayiqbl9jd\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"الضريبه\",\"color\":\"#FF7A59\",\"done\":false,\"order\":8},{\"id\":\"todo-mvdi57tzlrcb\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Booling\",\"color\":\"#FF7A59\",\"done\":false,\"order\":8},{\"id\":\"todo-mvdi5iqlre3c\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Walk\",\"color\":\"#FF7A59\",\"done\":false,\"order\":9},{\"id\":\"todo-mvdi5mlqxgiq\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"PS5\",\"color\":\"#FF7A59\",\"done\":false,\"order\":10},{\"id\":\"todo-mvdi5rlmpmc7\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"YouTube\",\"color\":\"#FF7A59\",\"done\":false,\"order\":11},{\"id\":\"todo-mvdiqubtcyh0\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"رزاني معهد\",\"color\":\"#FF7A59\",\"done\":false,\"order\":7},{\"id\":\"todo-mvi0ntmgqjb4\",\"listId\":\"todo-list-mss02ipi42mo\",\"text\":\"Botanic garden\",\"color\":\"#FF7A59\",\"done\":false,\"order\":12},{\"id\":\"todo-mvr2qg08cwjs\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"_________\",\"color\":\"#6B9080\",\"done\":false,\"order\":11},{\"id\":\"todo-mvxfqykg9ryg\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"اشياء اقرا عن دوامي\",\"color\":\"#FF7A59\",\"done\":false,\"order\":10},{\"id\":\"todo-mvxu8n3a35v6\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"قيام ليل ونوم للفجر\",\"color\":\"#FF7A59\",\"done\":false,\"order\":5},{\"id\":\"todo-mw0wk0vpfz59\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"Email\",\"color\":\"#FF7A59\",\"done\":false,\"order\":3},{\"id\":\"todo-mw2f9mq9hb5g\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"يدي تمرين\",\"color\":\"#FF7A59\",\"done\":false,\"order\":0},{\"id\":\"todo-mw2f9qehsk5w\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"مشي\",\"color\":\"#FF7A59\",\"done\":false,\"order\":1},{\"id\":\"todo-mw2fblhfjh9i\",\"listId\":\"todo-list-mstg1kzsqzqa\",\"text\":\"Dark\",\"color\":\"#FF7A59\",\"done\":false,\"order\":2}]", "todo-lists": "[{\"id\":\"todo-list-mstg1kzsqzqa\",\"title\":\"🟥 Today tasks\",\"color\":\"#5B8DBE\",\"widgetSpan\":2},{\"id\":\"todo-list-mss02ipi42mo\",\"title\":\"🔋 Fun Activity\",\"color\":\"#E8B93F\",\"widgetSpan\":2}]"};
-async function seedIfFresh(){
-  try{
-    const hasSteps = await window.storage.get('routine-steps', false);
-    const hasLists = await window.storage.get('todo-lists', false);
-    if (hasSteps || hasLists) return;
-    for (const k of Object.keys(SEED_BACKUP)){
-      await window.storage.set(k, SEED_BACKUP[k], false);
-    }
-  }catch(e){ console.error('seed error', e); }
-}
-(async function init(){
-  await seedIfFresh();
+// Reads everything from local storage into memory (also used after a sync pull).
+async function loadAllState(){
   STEPS = await loadSteps();
   await migrateSteps();
   skillNotes = await loadSkillNotes();
@@ -3884,13 +4055,15 @@ async function seedIfFresh(){
     todoLists = loadedLists;
     // legacy todos saved before multi-list support won't have a listId — attach them to the first list
     let needsSave = false;
-    todos.forEach(t => {
-      if (!t.listId){ t.listId = todoLists[0].id; needsSave = true; }
-    });
+    if (todoLists.length){
+      todos.forEach(t => {
+        if (!t.listId){ t.listId = todoLists[0].id; needsSave = true; }
+      });
+    }
     if (needsSave) await saveTodos();
   } else {
-    todoLists = [{ id: 'todo-list-default', title: 'To-Do List' }];
-    todos = todos.map(t => t.listId ? t : { ...t, listId: 'todo-list-default' });
+    todoLists = [{ id: 'todo-list-today', title: 'Today tasks' }];
+    todos = todos.map(t => t.listId ? t : { ...t, listId: 'todo-list-today' });
     await saveTodoLists();
     if (todos.length) await saveTodos();
   }
@@ -3904,13 +4077,723 @@ async function seedIfFresh(){
   if (notesChanged) await saveSkillNotes();
   doneLog = await loadDoneLog();
   todoCleanupDate = await loadTodoCleanupDate();
+  await loadCalendarFeeds();
+}
+
+let appStarted = false;
+async function startApp(){
+  await loadAllState();
   await cleanupCompletedTodosIfNewDay();
+  view = 'grid';
   render();
+  setSyncStatus(syncStatus);
+  refreshCalendars(false);
+  if (appStarted) return;
+  appStarted = true;
   // catch the midnight rollover if the app is left open — check every minute
   setInterval(async ()=>{
+    if (!currentUser) return;
     const changed = await cleanupCompletedTodosIfNewDay();
     if (changed) render();
   }, 60 * 1000);
+  // push unsent edits when the connection comes back
+  window.addEventListener('online', () => {
+    if (!sb){ if (!Object.keys(Sync.pending).length || confirm('You\'re back online. Reload to sync your changes?')) location.reload(); return; }
+    Sync.flush();
+  });
+  // when returning to the app, send local edits and fetch changes made on other devices
+  document.addEventListener('visibilitychange', async () => {
+    if (!currentUser) return;
+    if (document.visibilityState === 'hidden'){ Sync.flush(); return; }
+    await refreshFromCloud();
+    refreshCalendars(false);
+  });
+}
+
+function isSafeToRerender(){
+  const a = document.activeElement;
+  const typing = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
+  return view === 'grid' && !typing && !todayEditingId && !todayMenuId && !todayListEditing;
+}
+let redrawDeferred = false;
+async function refreshFromCloud(){
+  if (!currentUser || !sb || !navigator.onLine || refreshing) return;
+  refreshing = true;
+  try{
+    await Sync.flush();
+    const { changed } = await Sync.pull();
+    if (changed){
+      await loadAllState();
+      if (isSafeToRerender()) render(); else redrawDeferred = true;
+    }
+    setSyncStatus(Object.keys(Sync.pending).length ? 'saving' : 'saved');
+  }catch(e){ console.error('sync pull failed', e); }
+  refreshing = false;
+}
+let refreshing = false;
+document.addEventListener('focusout', () => {
+  if (!redrawDeferred) return;
+  setTimeout(() => { if (redrawDeferred && isSafeToRerender()){ redrawDeferred = false; render(); } }, 50);
+});
+
+// Asks which copy to keep when this device and the account both already have a routine.
+function askWhichDataToKeep(){
+  return new Promise(resolve => {
+    stepLabel.textContent = 'Choose your data';
+    outerActions.innerHTML = '';
+    card.innerHTML = `
+      <div class="grid-header"><h1 style="font-size:34px;">Two routines found.</h1>
+      <p class="sub">This device already has a routine saved, and so does your account. Which one should be kept?</p></div>
+      <div class="actions" style="margin-top:8px;">
+        <button class="btn btn-primary" id="keepCloudBtn">Use my account's data <span class="btn-arrow">↓</span></button>
+        <button class="btn btn-secondary" id="keepLocalBtn">Use this device's data <span class="btn-arrow">↑</span></button>
+      </div>
+      <p class="sub" style="margin-top:16px; font-size:12.5px;">The other copy is replaced on all devices. If unsure, cancel, press ⬇ Backup in the old app, then sign in again.</p>
+      <button class="edit-link-btn" id="cancelChoiceBtn">Cancel and sign out</button>`;
+    document.getElementById('keepCloudBtn').addEventListener('click', () => resolve('cloud'));
+    document.getElementById('keepLocalBtn').addEventListener('click', () => {
+      if (confirm('Replace the routine saved in your account with the one on this device?')) resolve('local');
+    });
+    document.getElementById('cancelChoiceBtn').addEventListener('click', () => resolve('cancel'));
+  });
+}
+
+let recoveryMode = false;
+
+// Called once a user is signed in: brings this device in line with their account, then opens the app.
+async function onSignedIn(user){
+  currentUser = user;
+  Sync.loadPending();
+  card.innerHTML = '<p class="sub" style="margin:0;">Loading your routine…</p>';
+  outerActions.innerHTML = '';
+  stepLabel.textContent = 'Syncing';
+  let lastUser = null;
+  try{ lastUser = localStorage.getItem('sync-user'); }catch(e){}
+
+  // Another account was last used on this device — never mix their data with this one.
+  if (lastUser && lastUser !== user.id){
+    await clearLocalData();
+    try{ localStorage.removeItem('sync-pending-' + lastUser); }catch(e){}
+    Sync.pending = {}; Sync.savePending();
+  }
+  try{
+    const firstTimeHere = lastUser !== user.id;
+    const hadLocal = firstTimeHere && await localHasData();
+    const cloud = await sb.from('kv').select('key').eq('user_id', user.id);
+    if (cloud.error) throw cloud.error;
+    const cloudCount = cloud.data.length;
+
+    let choice = cloudCount === 0 ? (hadLocal ? 'local' : 'none') : (hadLocal ? null : 'cloud');
+    if (choice === null){
+      choice = await askWhichDataToKeep();
+      if (choice === 'cancel'){ await sb.auth.signOut(); currentUser = null; renderAuth('signin'); return; }
+      card.innerHTML = '<p class="sub" style="margin:0;">Syncing…</p>';
+    }
+    if (choice === 'local'){
+      // Upload everything on this device as the account's data.
+      for (const k of SYNC_KEYS){ Sync.pending[k] = 1; }
+      Sync.savePending();
+      await Sync.flush();
+      if (Object.keys(Sync.pending).length) throw new Error('upload failed');
+    } else if (choice === 'cloud'){
+      if (firstTimeHere){
+        // The account is the source of truth: drop local keys it doesn't have.
+        Sync.pending = {}; Sync.savePending();
+        const cloudKeys = new Set(cloud.data.map(r => r.key));
+        for (const k of SYNC_KEYS){ if (!cloudKeys.has(k)) await rawDelete(k); }
+      }
+      await Sync.pull();
+    }
+    try{ localStorage.setItem('sync-user', user.id); localStorage.setItem('sync-email', user.email || ''); }catch(e){}
+    setSyncStatus(Object.keys(Sync.pending).length ? 'saving' : 'saved');
+    Sync.flush();
+  }catch(e){
+    console.error('initial sync failed', e);
+    if (lastUser !== user.id){
+      // Not online on a device that hasn't loaded this account before — nothing safe to show.
+      card.innerHTML = '<h1 style="font-size:26px;">Can\'t reach your account</h1><p class="sub">You need a connection the first time you sign in on this device. Try again once you\'re online.</p><div class="actions"><button class="btn btn-primary" id="retrySyncBtn">Try again</button></div>';
+      document.getElementById('retrySyncBtn').addEventListener('click', () => onSignedIn(user));
+      return;
+    }
+    setSyncStatus('offline'); // same user, cached data on this device — keep working offline
+  }
+  if (recoveryMode){ renderAuth('newpass'); return; }
+  await startApp();
+}
+
+let signingOut = false;
+async function signOut(){
+  if (signingOut) return;
+  const uid = currentUser && currentUser.id;
+  if (sb && navigator.onLine){ try{ await Sync.flush(); }catch(e){} }
+  if (Object.keys(Sync.pending).length){
+    const ok = confirm('Some changes haven\'t reached the cloud yet (you may be offline). Log out anyway and lose them?');
+    if (!ok) return;
+  }
+  signingOut = true;
+  card.innerHTML = '<p class="sub" style="margin:0;">Signing out…</p>';
+  outerActions.innerHTML = '';
+  try{ if (sb) await sb.auth.signOut(); }catch(e){}
+  await clearLocalData();
+  try{
+    localStorage.removeItem('sync-user'); localStorage.removeItem('sync-email');
+    if (uid) localStorage.removeItem('sync-pending-' + uid);
+  }catch(e){}
+  currentUser = null;
+  Sync.pending = {};
+  STEPS = []; todos = []; todoLists = []; history = {}; linkHistory = {}; skillNotes = {}; doneLog = {};
+  activeId = null; activeTodoListId = null; calSelectedKey = null; view = 'grid';
+  clearCalendarCache();
+  const st = document.getElementById('syncStatus'); if (st){ st.textContent = ''; delete st.dataset.state; }
+  signingOut = false;
+  updateAccountBar();
+  renderAuth('signin');
+}
+
+// ---------- iPhone (iCloud) calendar ----------
+// Reads published calendar links (iCloud "Public Calendar" share links) through a small Supabase
+// Edge Function named `calendar-proxy` (browsers aren't allowed to read those links directly).
+let calFeeds = [];        // [{ id, name, url, color }] — synced with the account
+let calEvents = [];       // expanded occurrences in memory: { title, location, start:Date, end:Date, allDay, color }
+let calFeedState = {};    // id -> { at, error }
+let calRefreshing = false;
+const CAL_COLORS = ['#9886E2', '#3A78DB', '#F25A45', '#A9C8C4', '#F1D5B1', '#0B0B0B'];
+const CAL_CACHE_PREFIX = 'cal-cache-';
+const CAL_MAX_AGE = 15 * 60 * 1000;
+
+async function loadCalendarFeeds(){
+  try{
+    const res = await window.storage.get('calendar-feeds', false);
+    const v = res ? JSON.parse(res.value) : [];
+    calFeeds = Array.isArray(v) ? v : [];
+  }catch(e){ calFeeds = []; }
+  calFeedState = {};
+  calEvents = [];
+  calFeeds.forEach(f => {
+    try{
+      const c = JSON.parse(localStorage.getItem(CAL_CACHE_PREFIX + f.id) || 'null');
+      if (c && c.url === f.url){
+        calFeedState[f.id] = { at: c.at, error: c.error || null };
+        (c.events || []).forEach(e => calEvents.push({ title: e.t, location: e.l, start: new Date(e.s), end: new Date(e.e), allDay: !!e.a, color: f.color }));
+      }
+    }catch(e){}
+  });
+}
+async function saveCalendarFeeds(){
+  await window.storage.set('calendar-feeds', JSON.stringify(calFeeds), false);
+}
+function clearCalendarCache(){
+  try{
+    Object.keys(localStorage).filter(k => k.startsWith(CAL_CACHE_PREFIX)).forEach(k => localStorage.removeItem(k));
+  }catch(e){}
+  calFeeds = []; calEvents = []; calFeedState = {};
+}
+
+async function fetchFeedText(url){
+  const { data, error } = await sb.functions.invoke('calendar-proxy', { body: { url } });
+  if (error){
+    let detail = '';
+    try{ if (error.context && typeof error.context.text === 'function') detail = await error.context.text(); }catch(e){}
+    const status = error.context && error.context.status;
+    if (status === 404 || /not found|failed to send a request/i.test(String(error.message) + detail)){
+      throw new Error('The calendar helper isn\'t set up in Supabase yet (Edge Function "calendar-proxy").');
+    }
+    throw new Error(detail || error.message || 'Could not load calendar.');
+  }
+  const text = typeof data === 'string' ? data : (data instanceof Blob ? await data.text() : String(data || ''));
+  if (!text.includes('BEGIN:VCALENDAR')) throw new Error('That link didn\'t return a calendar.');
+  return text;
+}
+
+async function refreshCalendars(force){
+  if (!currentUser || !sb || !navigator.onLine || calRefreshing || !calFeeds.length) return;
+  const stale = calFeeds.filter(f => force || !calFeedState[f.id] || !calFeedState[f.id].at || (Date.now() - calFeedState[f.id].at) > CAL_MAX_AGE);
+  if (!stale.length) return;
+  calRefreshing = true;
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+  const to = new Date(now.getFullYear() + 1, now.getMonth() + 1, 1);
+  for (const f of stale){
+    try{
+      const text = await fetchFeedText(f.url);
+      const occ = expandCalendar(parseICS(text), from, to);
+      const cache = { url: f.url, at: Date.now(), error: null,
+        events: occ.map(o => ({ t: o.title, l: o.location || '', s: o.start.getTime(), e: o.end.getTime(), a: o.allDay ? 1 : 0 })) };
+      try{ localStorage.setItem(CAL_CACHE_PREFIX + f.id, JSON.stringify(cache)); }catch(e){}
+    }catch(e){
+      console.error('calendar refresh failed', e);
+      let prev = null;
+      try{ prev = JSON.parse(localStorage.getItem(CAL_CACHE_PREFIX + f.id) || 'null'); }catch(_){}
+      const cache = (prev && prev.url === f.url) ? prev : { url: f.url, at: 0, events: [] };
+      cache.error = e.message || String(e);
+      cache.at = cache.at || 0;
+      try{ localStorage.setItem(CAL_CACHE_PREFIX + f.id, JSON.stringify(cache)); }catch(_){}
+      calFeedState[f.id] = { at: cache.at, error: cache.error };
+    }
+  }
+  calRefreshing = false;
+  await loadCalendarFeeds();
+  if (view === 'calendars') renderCalendarsScreen();
+  else if (isSafeToRerender()) render();
+}
+
+// --- .ics parsing ---
+function unescapeICS(v){ return v.replace(/\\n/gi, ' ').replace(/\\([,;\\])/g, '$1').trim(); }
+function tzOffsetMs(ts, tz){
+  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const p = {};
+  f.formatToParts(new Date(ts)).forEach(x => { p[x.type] = x.value; });
+  return Date.UTC(+p.year, +p.month - 1, +p.day, (+p.hour) % 24, +p.minute, +p.second) - ts;
+}
+function zonedToDate(y, mo, d, h, mi, se, tz){
+  try{
+    const guess = Date.UTC(y, mo - 1, d, h, mi, se);
+    const o1 = tzOffsetMs(guess, tz);
+    let t = guess - o1;
+    const o2 = tzOffsetMs(t, tz);
+    if (o2 !== o1) t = guess - o2;
+    return new Date(t);
+  }catch(e){ return new Date(y, mo - 1, d, h, mi, se); }
+}
+function parseICSDate(value, params){
+  const v = String(value || '').trim();
+  const m = v.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (!m[4] || (params && params.VALUE === 'DATE')) return { date: new Date(y, mo - 1, d), allDay: true };
+  const h = +m[4], mi = +m[5], se = +(m[6] || 0);
+  if (m[7]) return { date: new Date(Date.UTC(y, mo - 1, d, h, mi, se)), allDay: false, utc: true };
+  if (params && params.TZID) return { date: zonedToDate(y, mo, d, h, mi, se, params.TZID), allDay: false };
+  return { date: new Date(y, mo - 1, d, h, mi, se), allDay: false };
+}
+function parseDurationMs(v){
+  const m = String(v).match(/^([+-])?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
+  if (!m) return 0;
+  const ms = ((+m[2] || 0) * 7 * 86400 + (+m[3] || 0) * 86400 + (+m[4] || 0) * 3600 + (+m[5] || 0) * 60 + (+m[6] || 0)) * 1000;
+  return m[1] === '-' ? -ms : ms;
+}
+function parseICS(text){
+  const lines = text.replace(/\r\n?/g, '\n').replace(/\n[ \t]/g, '').split('\n');
+  const events = [];
+  let ev = null, depth = 0;
+  for (const line of lines){
+    if (line === 'BEGIN:VEVENT'){ ev = { exdates: [] }; depth = 0; continue; }
+    if (!ev) continue;
+    if (line.startsWith('BEGIN:')){ depth++; continue; }     // e.g. VALARM inside an event
+    if (line.startsWith('END:') && line !== 'END:VEVENT'){ depth--; continue; }
+    if (line === 'END:VEVENT'){ if (ev.start && ev.status !== 'CANCELLED') events.push(ev); ev = null; continue; }
+    if (depth > 0) continue;
+    const idx = line.indexOf(':');
+    if (idx < 0) continue;
+    const left = line.slice(0, idx), value = line.slice(idx + 1);
+    const parts = left.split(';');
+    const name = parts[0].toUpperCase();
+    const params = {};
+    parts.slice(1).forEach(pp => { const i = pp.indexOf('='); if (i > 0) params[pp.slice(0, i).toUpperCase()] = pp.slice(i + 1).replace(/^"|"$/g, ''); });
+    if (name === 'SUMMARY') ev.title = unescapeICS(value);
+    else if (name === 'LOCATION') ev.location = unescapeICS(value);
+    else if (name === 'UID') ev.uid = value.trim();
+    else if (name === 'DTSTART') ev.start = parseICSDate(value, params);
+    else if (name === 'DTEND') ev.end = parseICSDate(value, params);
+    else if (name === 'DURATION') ev.duration = parseDurationMs(value);
+    else if (name === 'RRULE') ev.rrule = value.trim();
+    else if (name === 'STATUS') ev.status = value.trim().toUpperCase();
+    else if (name === 'RECURRENCE-ID') ev.recurrenceId = parseICSDate(value, params);
+    else if (name === 'EXDATE') value.split(',').forEach(x => { const d = parseICSDate(x, params); if (d) ev.exdates.push(d.date.getTime()); });
+  }
+  return events;
+}
+function expandCalendar(events, from, to){
+  // moved/edited single occurrences replace the matching occurrence of the repeating event
+  const masters = {};
+  events.forEach(e => { if (e.rrule && e.uid) masters[e.uid] = e; });
+  events.forEach(e => { if (e.recurrenceId && e.uid && masters[e.uid]) masters[e.uid].exdates.push(e.recurrenceId.date.getTime()); });
+  const out = [];
+  events.forEach(e => { try{ out.push(...expandEvent(e, from, to)); }catch(err){ console.error('event skipped', err); } });
+  out.sort((a, b) => a.start - b.start);
+  return out;
+}
+function expandEvent(ev, from, to){
+  const out = [];
+  const s = ev.start.date;
+  const allDay = ev.start.allDay;
+  let durMs = ev.end ? (ev.end.date - s) : (ev.duration != null ? ev.duration : (allDay ? 86400000 : 0));
+  if (!(durMs >= 0)) durMs = 0;
+  const ex = new Set(ev.exdates);
+  const push = st => {
+    if (ex.has(st.getTime())) return;
+    const en = new Date(st.getTime() + durMs);
+    if (en >= from && st <= to) out.push({ title: ev.title || '(No title)', location: ev.location || '', start: st, end: en, allDay });
+  };
+  if (!ev.rrule || ev.recurrenceId){ push(s); return out; }
+  const r = {};
+  ev.rrule.split(';').forEach(pp => { const i = pp.indexOf('='); if (i > 0) r[pp.slice(0, i).toUpperCase()] = pp.slice(i + 1); });
+  const freq = r.FREQ, interval = Math.max(1, +(r.INTERVAL || 1));
+  const count = r.COUNT ? +r.COUNT : Infinity;
+  const untilP = r.UNTIL ? parseICSDate(r.UNTIL, {}) : null;
+  const until = untilP ? (untilP.allDay ? new Date(untilP.date.getTime() + 86399999) : untilP.date) : null;
+  const DAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  const byday = r.BYDAY ? r.BYDAY.split(',') : null;
+  const bymonthday = r.BYMONTHDAY ? r.BYMONTHDAY.split(',').map(Number) : null;
+  // repeat on the calendar's own clock: UTC-defined events keep their UTC time, others keep local wall-clock time
+  const U = !!ev.start.utc;
+  const g = U ? { Y: x => x.getUTCFullYear(), Mo: x => x.getUTCMonth(), D: x => x.getUTCDate(), W: x => x.getUTCDay() }
+              : { Y: x => x.getFullYear(), Mo: x => x.getMonth(), D: x => x.getDate(), W: x => x.getDay() };
+  const H = U ? s.getUTCHours() : s.getHours(), M = U ? s.getUTCMinutes() : s.getMinutes(), S = U ? s.getUTCSeconds() : s.getSeconds();
+  const mk = (y, m, d) => U ? new Date(Date.UTC(y, m, d, H, M, S)) : new Date(y, m, d, H, M, S);
+  const dowOf = (y, m, d) => U ? new Date(Date.UTC(y, m, d)).getUTCDay() : new Date(y, m, d).getDay();
+  const LIMIT = 20000;
+  let n = 0;
+  const emit = d => {               // returns false once we should stop generating
+    if (d < s) return true;
+    if (until && d > until) return false;
+    if (n >= count) return false;
+    n++;
+    push(d);
+    return d <= to;
+  };
+  if (freq === 'DAILY'){
+    for (let i = 0; i < LIMIT; i++){ if (!emit(mk(g.Y(s), g.Mo(s), g.D(s) + i * interval))) break; }
+  } else if (freq === 'WEEKLY'){
+    const days = byday ? byday.map(x => DAYS.indexOf(x.slice(-2))).filter(x => x >= 0).sort((a, b) => a - b) : [g.W(s)];
+    const ws = mk(g.Y(s), g.Mo(s), g.D(s) - g.W(s));
+    outer: for (let w = 0; w < LIMIT; w++){
+      for (const dw of days){
+        if (!emit(mk(g.Y(ws), g.Mo(ws), g.D(ws) + w * 7 * interval + dw))) break outer;
+      }
+    }
+  } else if (freq === 'MONTHLY'){
+    for (let i = 0; i < LIMIT; i++){
+      const first = mk(g.Y(s), g.Mo(s) + i * interval, 1);
+      const y = g.Y(first), m = g.Mo(first);
+      const daysIn = U ? new Date(Date.UTC(y, m + 1, 0)).getUTCDate() : new Date(y, m + 1, 0).getDate();
+      let cands = [];
+      if (byday){
+        byday.forEach(x => {
+          const mt = x.match(/^([+-]?\d+)?(SU|MO|TU|WE|TH|FR|SA)$/);
+          if (!mt) return;
+          const ord = mt[1] ? +mt[1] : 0, dw = DAYS.indexOf(mt[2]);
+          const matches = [];
+          for (let dd = 1; dd <= daysIn; dd++) if (dowOf(y, m, dd) === dw) matches.push(dd);
+          if (!ord) cands.push(...matches);
+          else { const v = ord > 0 ? matches[ord - 1] : matches[matches.length + ord]; if (v) cands.push(v); }
+        });
+      } else {
+        (bymonthday || [g.D(s)]).forEach(dd => { const v = dd < 0 ? daysIn + dd + 1 : dd; if (v >= 1 && v <= daysIn) cands.push(v); });
+      }
+      cands = [...new Set(cands)].sort((a, b) => a - b);
+      let stop = false;
+      for (const dd of cands){ if (!emit(mk(y, m, dd))){ stop = true; break; } }
+      if (stop || first > to) break;
+    }
+  } else if (freq === 'YEARLY'){
+    for (let i = 0; i < LIMIT; i++){
+      const y = g.Y(s) + i * interval;
+      const d = mk(y, g.Mo(s), g.D(s));
+      if (g.Mo(d) !== g.Mo(s)) continue; // Feb 29 in non-leap years
+      if (!emit(d)) break;
+    }
+  } else {
+    push(s);
+  }
+  return out;
+}
+
+// --- display ---
+function eventsForDay(k){
+  const [y, m, d] = k.split('-').map(Number);
+  const ds = new Date(y, m - 1, d), de = new Date(y, m - 1, d + 1);
+  return calEvents.filter(e => e.start < de && (e.end > ds || (e.start >= ds && e.end.getTime() === e.start.getTime())))
+    .sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start));
+}
+function calEventDotsHTML(k){
+  if (!calEvents.length) return '';
+  const evs = eventsForDay(k);
+  if (!evs.length) return '';
+  const colors = [...new Set(evs.map(e => e.color))].slice(0, 3);
+  return `<span class="cal-evdots" aria-label="${evs.length} event${evs.length === 1 ? '' : 's'}">${colors.map(c => `<i style="--ec:${c}"></i>`).join('')}</span>`;
+}
+function fmtClock(d){ return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); }
+function eventTimeLabel(e, k){
+  if (e.allDay) return 'All day';
+  const [y, m, d] = k.split('-').map(Number);
+  const ds = new Date(y, m - 1, d), de = new Date(y, m - 1, d + 1);
+  const startsBefore = e.start < ds, endsAfter = e.end > de;
+  if (startsBefore && endsAfter) return 'All day';
+  if (startsBefore) return 'Until ' + fmtClock(e.end);
+  if (endsAfter || e.end.getTime() === e.start.getTime()) return fmtClock(e.start);
+  return fmtClock(e.start) + '–' + fmtClock(e.end);
+}
+function renderEventsBlock(k){
+  if (!calFeeds.length) return '';
+  const evs = eventsForDay(k);
+  const isToday = k === todayKey();
+  const now = new Date();
+  const errs = calFeeds.filter(f => calFeedState[f.id] && calFeedState[f.id].error);
+  return `<section class="ev-block">
+    <div class="ev-head">
+      <h2 class="ev-title">${isToday ? 'Calendar' : 'Calendar · ' + escHTML(new Date(k + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</h2>
+      <div class="ev-count">${evs.length} event${evs.length === 1 ? '' : 's'}</div>
+    </div>
+    ${evs.length ? `<ul class="ev-list">${evs.map(e => `<li class="ev-row ${isToday && !e.allDay && e.end < now ? 'past' : ''}" style="--ec:${e.color}">
+        <span class="ev-time">${eventTimeLabel(e, k)}</span>
+        <div class="ev-main"><div class="ev-name" dir="auto">${escHTML(e.title)}</div>${e.location ? `<div class="ev-loc" dir="auto">${escHTML(e.location)}</div>` : ''}</div>
+      </li>`).join('')}</ul>` : `<p class="ev-empty">${calEvents.length || !errs.length ? 'No events.' : 'Events couldn\'t be loaded yet.'}</p>`}
+    ${errs.length ? `<p class="ev-note">Calendar not updating — see Options › iPhone calendar</p>` : ''}
+  </section>`;
+}
+
+let calColorDraft = null;
+function renderCalendarsScreen(){
+  if (!calColorDraft) calColorDraft = CAL_COLORS[calFeeds.length % CAL_COLORS.length];
+  const meta = f => {
+    const st = calFeedState[f.id];
+    if (st && st.error) return `<div class="feed-meta err">${escHTML(st.error)}</div>`;
+    if (st && st.at) return `<div class="feed-meta">Updated ${new Date(st.at).toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</div>`;
+    return `<div class="feed-meta">${calRefreshing ? 'Loading…' : 'Not loaded yet'}</div>`;
+  };
+  card.innerHTML = `
+    ${ICONS.calendar}
+    <h1 style="font-size:26px;">iPhone calendar</h1>
+    <p class="sub">Show events from your iPhone (iCloud) calendars on this app's calendar. The links are saved to your account.</p>
+    ${calFeeds.length ? `<div class="feed-list">${calFeeds.map(f => `<div class="feed-row">
+        <span class="feed-sw" style="background:${f.color}"></span>
+        <div class="feed-info"><div class="feed-name" dir="auto">${escHTML(f.name)}</div>${meta(f)}</div>
+        <button class="manage-remove" data-id="${f.id}" aria-label="Remove ${escHTML(f.name)}">✕</button>
+      </div>`).join('')}</div>
+      <button class="edit-link-btn" id="calRefreshBtn" style="margin-bottom:22px;">${calRefreshing ? 'Refreshing…' : '↻ Refresh now'}</button>` : ''}
+    <div class="edit-fields">
+      <div class="edit-field"><label for="calNameInput">Calendar name</label>
+        <input class="edit-input" id="calNameInput" dir="auto" placeholder="e.g. Personal, Work, Oxford"></div>
+      <div class="edit-field"><label for="calUrlInput">Public calendar link</label>
+        <input class="edit-input" id="calUrlInput" dir="ltr" type="url" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="webcal://p…-caldav.icloud.com/published/…"></div>
+      <div class="edit-field"><label>Colour</label>
+        <div class="todo-color-row" id="calColorRow" style="margin-bottom:0;">${CAL_COLORS.map(c => `<button class="todo-swatch ${c === calColorDraft ? 'selected' : ''}" data-color="${c}" style="background:${c}" aria-label="colour"></button>`).join('')}</div></div>
+    </div>
+    <div class="actions"><button class="btn btn-primary" id="calAddBtn">+ Add calendar</button></div>
+    <div class="save-msg" id="calMsg"></div>
+    <div class="help-box">
+      <strong>Getting the link on iPhone</strong>
+      <ol>
+        <li>Open <b>Calendar</b> → tap <b>Calendars</b> at the bottom.</li>
+        <li>Tap <b>ⓘ</b> next to an iCloud calendar.</li>
+        <li>Turn on <b>Public Calendar</b>, tap <b>Share Link…</b> → <b>Copy</b>.</li>
+        <li>Paste it above. Repeat for each calendar you want.</li>
+      </ol>
+      <p style="margin:8px 0 0;">Anyone who has that link can see the calendar, so keep it private. Updates show here within about 15 minutes.</p>
+    </div>
+  `;
+  const nav = document.createElement('div');
+  nav.className = 'nav';
+  nav.innerHTML = `<button class="back-main" disabled>← Back</button><button id="doneCalBtn" class="next-main">Done →</button>`;
+  card.appendChild(nav);
+  document.getElementById('doneCalBtn').addEventListener('click', () => { calColorDraft = null; view = 'grid'; render(); });
+  card.querySelectorAll('#calColorRow .todo-swatch').forEach(b => b.addEventListener('click', () => {
+    calColorDraft = b.dataset.color;
+    card.querySelectorAll('#calColorRow .todo-swatch').forEach(x => x.classList.toggle('selected', x === b));
+  }));
+  card.querySelectorAll('.feed-row .manage-remove').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('Remove this calendar from the app?')) return;
+    calFeeds = calFeeds.filter(f => f.id !== b.dataset.id);
+    try{ localStorage.removeItem(CAL_CACHE_PREFIX + b.dataset.id); }catch(e){}
+    await saveCalendarFeeds();
+    await loadCalendarFeeds();
+    renderCalendarsScreen();
+  }));
+  const rb = document.getElementById('calRefreshBtn');
+  if (rb) rb.addEventListener('click', async () => { rb.textContent = 'Refreshing…'; await refreshCalendars(true); renderCalendarsScreen(); });
+  document.getElementById('calAddBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('calMsg');
+    const name = document.getElementById('calNameInput').value.trim() || 'Calendar';
+    const raw = document.getElementById('calUrlInput').value.trim();
+    let url;
+    try{
+      url = new URL(raw.replace(/^webcals?:\/\//i, 'https://'));
+      if (url.protocol !== 'https:') throw new Error();
+    }catch(e){ msg.style.color = 'var(--danger)'; msg.textContent = 'Paste the full calendar link.'; return; }
+    if (!/(^|\.)icloud\.com$/i.test(url.hostname) && !/^calendar\.google\.com$/i.test(url.hostname) && !/^outlook\.(live|office365)\.com$/i.test(url.hostname)){
+      msg.style.color = 'var(--danger)'; msg.textContent = 'Use an iCloud public calendar link (…icloud.com/…).'; return;
+    }
+    if (!sb || !navigator.onLine){ msg.style.color = 'var(--danger)'; msg.textContent = 'You need to be online to add a calendar.'; return; }
+    msg.style.color = ''; msg.textContent = 'Checking the link…';
+    document.getElementById('calAddBtn').disabled = true;
+    try{
+      await fetchFeedText(url.toString());
+    }catch(e){
+      document.getElementById('calAddBtn').disabled = false;
+      msg.style.color = 'var(--danger)'; msg.textContent = e.message || String(e); return;
+    }
+    const id = 'cal-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    calFeeds.push({ id, name, url: url.toString(), color: calColorDraft });
+    calColorDraft = null;
+    await saveCalendarFeeds();
+    await loadCalendarFeeds();
+    renderCalendarsScreen();
+    await refreshCalendars(true);
+  });
+}
+
+// ---------- sign-in screen ----------
+let authMode = 'signin';
+function renderAuth(mode, message, isError){
+  authMode = mode || 'signin';
+  updateAccountBar();
+  outerActions.innerHTML = '';
+  const titles = { signin: 'Sign in.', signup: 'Create account.', reset: 'Reset password.', newpass: 'New password.' };
+  const subs = {
+    signin: 'Your routine, synced across your devices.',
+    signup: 'Use your email and a password of at least 8 characters.',
+    reset: 'We\'ll email you a link to set a new password.',
+    newpass: 'Choose a new password for your account.'
+  };
+  stepLabel.textContent = 'Account';
+  sunDot.setAttribute('cx', '0');
+  const showEmail = authMode !== 'newpass';
+  const showPass = authMode !== 'reset';
+  const showConfirm = authMode === 'signup' || authMode === 'newpass';
+  const btnLabel = { signin: 'Sign in', signup: 'Create account', reset: 'Send reset link', newpass: 'Save new password' }[authMode];
+  card.innerHTML = `
+    <div class="grid-header"><h1>${titles[authMode]}</h1><p class="sub">${subs[authMode]}</p></div>
+    <form class="auth-form" id="authForm" autocomplete="on" novalidate>
+      <div class="edit-fields">
+        ${showEmail ? `<div class="edit-field"><label for="authEmail">Email</label>
+          <input class="edit-input" id="authEmail" type="email" dir="ltr" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required></div>` : ''}
+        ${showPass ? `<div class="edit-field"><label for="authPass">Password</label>
+          <input class="edit-input" id="authPass" type="password" dir="ltr" autocomplete="${authMode === 'signin' ? 'current-password' : 'new-password'}" minlength="8" required></div>` : ''}
+        ${showConfirm ? `<div class="edit-field"><label for="authPass2">Confirm password</label>
+          <input class="edit-input" id="authPass2" type="password" dir="ltr" autocomplete="new-password" minlength="8" required></div>` : ''}
+      </div>
+      <div class="auth-msg ${isError ? 'error' : ''}" id="authMsg" role="status">${message ? escHTML(message) : ''}</div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" id="authSubmit">${btnLabel} <span class="btn-arrow">↵</span></button>
+      </div>
+    </form>
+    <div class="auth-links">
+      ${authMode === 'signin' ? `<button class="edit-link-btn" data-go="signup">Create an account</button><button class="edit-link-btn" data-go="reset">Forgot password?</button>` : ''}
+      ${authMode === 'signup' || authMode === 'reset' ? `<button class="edit-link-btn" data-go="signin">← Back to sign in</button>` : ''}
+    </div>
+  `;
+  card.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => renderAuth(b.dataset.go)));
+  const msg = (t, err) => { const m = document.getElementById('authMsg'); m.textContent = t; m.classList.toggle('error', !!err); };
+  document.getElementById('authForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = showEmail ? document.getElementById('authEmail').value.trim() : '';
+    const pass = showPass ? document.getElementById('authPass').value : '';
+    const pass2 = showConfirm ? document.getElementById('authPass2').value : '';
+    if (showEmail && !/^\S+@\S+\.\S+$/.test(email)) return msg('Enter a valid email address.', true);
+    if (showPass && pass.length < 8) return msg('Password must be at least 8 characters.', true);
+    if (showConfirm && pass !== pass2) return msg('The two passwords don\'t match.', true);
+    const btn = document.getElementById('authSubmit');
+    btn.disabled = true; msg('Please wait…');
+    try{
+      if (authMode === 'signin'){
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+        await onSignedIn(data.user);
+        return;
+      }
+      if (authMode === 'signup'){
+        const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: appUrl() } });
+        if (error) throw error;
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){
+          renderAuth('signin', 'An account with this email already exists. Sign in instead.', true); return;
+        }
+        if (data.session){ await onSignedIn(data.user); return; }
+        renderAuth('signin', 'Account created. Check your email to confirm it, then sign in here.');
+        return;
+      }
+      if (authMode === 'reset'){
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: appUrl() });
+        if (error) throw error;
+        renderAuth('signin', 'If that email has an account, a reset link is on its way.');
+        return;
+      }
+      if (authMode === 'newpass'){
+        const { data, error } = await sb.auth.updateUser({ password: pass });
+        if (error) throw error;
+        recoveryMode = false;
+        try{ window.history.replaceState(null, '', appUrl()); }catch(_){}
+        await onSignedIn(data.user);
+        return;
+      }
+    }catch(err){
+      btn.disabled = false;
+      msg(friendlyAuthError(err), true);
+    }
+  });
+  const first = card.querySelector('input');
+  if (first) first.focus({ preventScroll: true });
+}
+function appUrl(){ return location.origin + location.pathname; }
+function friendlyAuthError(err){
+  const m = (err && err.message) || String(err);
+  if (/invalid login credentials/i.test(m)) return 'Email or password is incorrect.';
+  if (/email not confirmed/i.test(m)) return 'Please confirm your email first — check your inbox for the link.';
+  if (/already registered|already exists/i.test(m)) return 'An account with this email already exists. Try signing in.';
+  if (/rate limit|too many/i.test(m)) return 'Too many attempts. Wait a minute and try again.';
+  if (/failed to fetch|load failed|networkerror|network/i.test(m)) return location.protocol === 'file:' || window.self !== window.top
+    ? 'This preview can\'t connect to the internet. Open the app from its web address (where you host it) to sign in.'
+    : 'Can\'t reach the server. Check your connection and try again.';
+  return m;
+}
+function renderSetupNeeded(){
+  stepLabel.textContent = 'Setup';
+  outerActions.innerHTML = '';
+  card.innerHTML = `
+    <div class="grid-header"><h1>Almost there.</h1><p class="sub">Accounts aren't connected yet.</p></div>
+    <p class="sub">Open this file and paste your Supabase project URL and anon key into <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script, then reload.</p>`;
+}
+
+function cleanAuthFromUrl(){
+  if (/access_token|refresh_token|type=|error_description|[?&]code=/.test(location.hash + location.search)){
+    try{ window.history.replaceState(null, '', appUrl()); }catch(e){}
+  }
+}
+
+(async function boot(){
+  const configured = !SUPABASE_URL.includes('YOUR-') && !SUPABASE_ANON_KEY.includes('YOUR-');
+  if (!sb){
+    let lastUser = null, lastEmail = '';
+    try{ lastUser = localStorage.getItem('sync-user'); lastEmail = localStorage.getItem('sync-email') || ''; }catch(e){}
+    if (configured && lastUser){
+      // Sync library couldn't load (no connection). Open the cached routine; edits upload next time you're online.
+      currentUser = { id: lastUser, email: lastEmail };
+      Sync.loadPending();
+      await startApp();
+      setSyncStatus('offline');
+      return;
+    }
+    if (configured){
+      stepLabel.textContent = 'Offline';
+      card.innerHTML = '<h1 style="font-size:26px;">No connection</h1><p class="sub">Connect to the internet to sign in.</p><div class="actions"><button class="btn btn-primary" onclick="location.reload()">Try again</button></div>';
+      return;
+    }
+    renderSetupNeeded(); return;
+  }
+  recoveryMode = /type=recovery/.test(location.hash + location.search);
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY'){ recoveryMode = true; renderAuth('newpass'); }
+    if (event === 'SIGNED_OUT' && currentUser && !signingOut){
+      currentUser = null;
+      renderAuth('signin', 'Your session ended. Please sign in again.');
+    }
+  });
+  let session = null;
+  try{ ({ data: { session } } = await sb.auth.getSession()); }catch(e){}
+  await new Promise(r => setTimeout(r, 0)); // let a PASSWORD_RECOVERY event land first
+  cleanAuthFromUrl();
+  if (recoveryMode && session){ renderAuth('newpass'); return; }
+  if (session && session.user){ await onSignedIn(session.user); return; }
+  let lastUser = null, lastEmail = '';
+  try{ lastUser = localStorage.getItem('sync-user'); lastEmail = localStorage.getItem('sync-email') || ''; }catch(e){}
+  if (!navigator.onLine && lastUser){
+    currentUser = { id: lastUser, email: lastEmail };
+    Sync.loadPending();
+    await startApp();
+    setSyncStatus('offline');
+    return;
+  }
+  renderAuth('signin');
 })();
 </script>
 </body>
