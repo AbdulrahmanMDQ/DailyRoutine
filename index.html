@@ -415,7 +415,9 @@
     opacity: 0.7;
   }
   .win-card[data-id]::after{ content: 'No. ' counter(tile, decimal-leading-zero); }
+  .win-card[data-id][data-no]::after{ content: 'No. ' attr(data-no); }
   .win-card.todo-tile::after{ content: 'List ' counter(list, decimal-leading-zero); }
+  .win-card[data-id]::after, .win-card[data-id][data-no]::after, .win-card.todo-tile::after{ content: none !important; }
 
   .win-card.grid-dragging{ outline: 2px solid var(--ghost); outline-offset: 2px; opacity: 0.96; cursor: grabbing; transition: none; }
   .win-card.resizing{ transition: none; outline: 2px solid var(--void); outline-offset: 2px; }
@@ -452,6 +454,33 @@
   }
   .win-card.win-done{ background: var(--void) !important; color: var(--ghost); }
   .win-card.win-done .win-fill{ background: transparent; }
+  @property --p{ syntax: '<number>'; inherits: true; initial-value: 0; }
+  .win-card[data-p]{ transition: filter 0.15s ease, background 0.35s ease 0.25s, --p 0.7s cubic-bezier(.3,.7,.2,1); }
+  /* progress: like the calendar days — a neutral box that fills with its own colour from the bottom */
+  /* automatic colours: deep shades that white text reads well on */
+  .win-card[data-p].tone-0{ --tc: #C8A57F; }
+  .win-card[data-p].tone-1{ --tc: #2E8B7F; }
+  .win-card[data-p].tone-2{ --tc: #7357D6; }
+  .win-card[data-p].tone-3{ --tc: #3A6FD0; }
+  .win-card[data-p].tone-4{ --tc: #D9473A; }
+  /* like the calendar's today cell: black box, its own colour rises from the bottom, white text */
+  .win-card[data-p]{ background: var(--void) !important; color: var(--ghost); box-shadow: none; transition: filter 0.15s ease, --p 0.7s cubic-bezier(.3,.7,.2,1); }
+  .win-card[data-p].win-done{ background: var(--tc) !important; color: var(--ghost); }
+  .win-prog{ position:absolute; left:0; right:0; bottom:0; height: calc(var(--p) * 1%); background: var(--tc); pointer-events:none; z-index:0; }
+  .win-prog i{ display:none; }
+  .win-card[data-p] > :not(.win-prog){ position: relative; z-index: 1; }
+  .win-card[data-p] > .win-check, .win-card[data-p] > .win-resize-handle{ position: absolute; z-index: 2; }
+  .win-card[data-p] .win-title{ text-shadow: 0 1px 2px rgba(0,0,0,0.18); }
+  .win-card[data-p][data-pct]::after{ content: attr(data-pct) !important; z-index: 2; color: var(--ghost); opacity: 1; font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; text-transform: none; }
+  .win-card[data-p] .win-resize-handle{ color: rgba(242,240,237,0.75); }
+  .win-grid .win-resize-handle svg{ opacity: 0; }
+  .win-card[data-p] .win-check:not(.checked){ color: var(--ghost); }
+  .win-card[data-p] .win-check.checked{ background: var(--ghost); border-color: var(--ghost); color: var(--void) !important; }
+  /* all text on skill boxes stays white; a soft shadow keeps it readable on light colours */
+  .win-card[data-p], .win-card[data-p].win-done{ color: var(--ghost); }
+  .win-card[data-p] .win-title{ text-shadow: none; }
+  .win-card[data-p]::after{ text-shadow: none; }
+
 
   .win-check{
     position:absolute; z-index:2; top: 10px; right: 10px;
@@ -510,8 +539,13 @@
   .weekday-block.selected{ background: var(--void); color: var(--ghost); }
 
   /* ===== to-do list ===== */
-  .todo-list{ display:flex; flex-direction:column; gap: 6px; margin-bottom: 18px; }
-  .todo-row{ display:flex; align-items:stretch; gap: 6px; }
+  .todo-list{ display:flex; flex-direction:column; gap: 0; margin-bottom: 6px; border-top: 1px solid var(--ink); }
+  .todo-row{ display:flex; align-items:center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); background: transparent; }
+  .todo-row.dragging{ background: var(--paper); }
+  .sort-ghost{ background: var(--paper); box-shadow: 0 14px 28px -14px rgba(0,0,0,0.45); opacity: .97; }
+  .sort-placeholder{ opacity: .25; }
+  .link-row, .todo-row, .tp-list-later .tp-row{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .todo-list.fold-body{ border-top: none; }
   .todo-drag{
     flex-shrink:0; width: 20px;
     border: none; background: transparent; color: var(--ink-soft);
@@ -548,6 +582,33 @@
     white-space: nowrap; cursor: pointer; border-radius: 0;
   }
   .todo-to-today:hover{ background: var(--void); color: var(--ghost); }
+  /* list rows styled like the Coming soon rows */
+  .todo-row .todo-pill{ flex:1; min-width:0; padding: 0; background: none; box-shadow: none; font-family: var(--sans); font-size: 15px; line-height: 1.35; color: var(--ink); -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .todo-row .todo-check{ width: 20px; height: 20px; flex-shrink:0; border: 1px solid var(--ink); background: transparent; color: var(--ghost); }
+  .todo-row .todo-check.checked{ background: var(--void); border-color: var(--void); }
+  .todo-row .todo-check svg{ width: 11px; height: 11px; }
+  .todo-row .todo-to-today{ padding: 5px 8px; font-size: 8.5px; letter-spacing: 0.08em; align-self: center; }
+  .todo-row .todo-delete{ width: 22px; color: var(--ink-soft); font-size: 20px; line-height: 1; }
+  .todo-row .todo-delete:hover{ color: var(--danger); }
+  .todo-row-done .todo-pill{ opacity: 0.45; text-decoration: line-through; }
+  .todo-add-form{ margin: 0 0 18px; }
+  .swatch-auto{ background: repeating-linear-gradient(135deg, #C8A57F 0 6px, #2E8B7F 6px 12px, #7357D6 12px 18px, #3A6FD0 18px 24px, #D9473A 24px 30px) !important; color: #fff; font-family: var(--mono); font-size: 10px; font-weight: 600; }
+  .skill-color-row{ flex-wrap: wrap; gap: 6px; }
+  .skill-color-row .todo-swatch{ width: 26px; height: 26px; }
+  .tp-letter, .plan-btn, .todo-to-today{ width: 24px; height: 24px; padding: 0 !important; display:inline-flex; align-items:center; justify-content:center; font-family: var(--mono); font-size: 11px !important; letter-spacing: 0 !important; flex-shrink: 0; }
+  .todo-row .todo-to-today{ align-self: center; }
+  .plan-btn{ position: relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
+  .plan-btn:focus-within{ outline: 2px solid var(--bay); outline-offset: 1px; }
+  .plan-pop{ position: fixed; z-index: 1000; width: 252px; background: var(--paper); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--void); padding: 10px; font-family: var(--sans); color: var(--ink); }
+  .pp-head{ display:flex; align-items:center; justify-content:space-between; font-family: var(--serif); font-size: 17px; margin-bottom: 6px; }
+  .pp-nav{ width: 28px; height: 28px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor:pointer; padding:0; font-size: 13px; }
+  .pp-nav:disabled{ opacity: .25; cursor: default; }
+  .pp-dow, .pp-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .pp-dow span{ text-align:center; font-family: var(--mono); font-size: 9px; color: var(--ink-soft); padding: 4px 0; }
+  .pp-day{ height: 30px; border: none; background: transparent; color: var(--ink); font-size: 13px; cursor:pointer; padding:0; }
+  .pp-day:hover:not(:disabled){ background: var(--void); color: var(--ghost); }
+  .pp-day:disabled{ color: var(--ink-soft); opacity: .35; cursor: default; }
+  .pp-today{ box-shadow: inset 0 0 0 1px var(--infrared); }
   .todo-moved-msg{
     margin: -14px 0 16px; padding: 9px 12px;
     background: var(--ether); color: var(--ink);
@@ -586,6 +647,8 @@
   .link-row.dragging{ z-index: 5; box-shadow: 0 12px 24px -12px rgba(0,0,0,0.4); background: var(--card); }
   .link-row-btn{ flex:1; }
   .link-no-url{ cursor: default; justify-content: flex-start; }
+  .link-task{ display:flex; align-items:center; padding: 12px 4px; font-family: var(--sans); font-size: 15px; color: var(--ink); border-bottom: 1px solid var(--border); }
+  .link-row:has(.link-task) .link-check{ width: 40px; align-self: center; height: 40px; }
   .link-check{
     flex-shrink:0; width: 50px;
     border-radius: 0;
@@ -607,6 +670,9 @@
     background: transparent; color: var(--danger);
     cursor:pointer; font-size: 12px;
   }
+  .link-kind-btn{ align-self:flex-start; background:none; border:none; padding: 2px 0; cursor:pointer; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+  .link-kind-btn:hover{ color: var(--bay); }
+  .add-item-row{ display:flex; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
   .link-remove-btn:hover{ background: var(--infrared); color: var(--void); }
   .link-edit-group{
     border-top: 1px solid var(--ink);
@@ -729,6 +795,8 @@
     border-bottom: 1px solid var(--ink);
   }
   .cal-month{ font-family: var(--serif); font-weight:300; font-size: 22px; letter-spacing:-0.01em; }
+  .cal-month{ display:flex; align-items:baseline; flex-wrap:wrap; column-gap: 10px; min-width:0; }
+  @media (max-width:400px){ .cal-month{ font-size: 19px; column-gap: 7px; } .cal-hijri-month{ font-size: 12px; } }
   .cal-nav{ display:flex; gap: 4px; align-items:center; }
   .cal-nav button{
     width: 30px; height: 30px; border: 1px solid var(--border); background: transparent;
@@ -756,9 +824,9 @@
   }
   .cal-day.today .cal-hijri{ color: rgba(243,242,238,0.75); }
   .cal-hijri-month{
-    display:block; margin-top: 3px;
+    display:inline-block; margin: 0; vertical-align: baseline;
     font-family: 'Noto Naskh Arabic', var(--serif);
-    font-size: 13px; color: var(--ink-soft); direction: rtl; text-align:left;
+    font-size: 13px; color: var(--ink-soft); direction: rtl; unicode-bidi: isolate; white-space: nowrap;
   }
   .cal-pct{ font-family: var(--mono); font-size: 8.5px; color: var(--ink-soft); margin-top:auto; position:relative; z-index:1; }
   .cal-fill{ position:absolute; left:0; right:0; bottom:0; background: var(--shore); z-index:0; }
@@ -772,10 +840,20 @@
   .cal-day[data-key]:hover{ background-color: rgba(11,11,11,0.04); }
   .cal-day.today:hover{ background-color: var(--void); }
   .cal-day.selected{ box-shadow: inset 0 0 0 2px var(--infrared); opacity: 1; }
-  .cal-day.has-tasks .cal-num::after{
-    content:''; display:inline-block; width: 5px; height: 5px; margin-left: 4px; vertical-align: top;
-    background: var(--bay);
-  }
+  .cal-track{ display:flex; align-items:center; gap: 8px; flex-wrap: wrap; padding: 10px 0 8px; border-bottom: 1px solid var(--border); }
+  .cal-track-label{ font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .cal-track select{ flex: 1 1 120px; min-width: 0; max-width: 100%; font-family: var(--sans); font-size: 14px; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); border-radius: 0; padding: 6px 26px 6px 8px; -webkit-appearance: none; appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 13px) 50%, calc(100% - 8px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+  .cal-track-sum{ display:flex; align-items:center; gap: 6px; padding: 7px 0 2px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; color: var(--ink-soft); }
+  .cal-track-sum .ct-dot{ position: static; margin-left: 6px; }
+  .ct-dot{ display:block; position: relative; z-index: 1; margin-top: auto; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .ct-dot.done{ background: var(--tk); }
+  .ct-dot.part{ background: linear-gradient(90deg, var(--tk) 50%, transparent 50%); box-shadow: inset 0 0 0 1.5px var(--tk); }
+  .ct-dot.miss{ box-shadow: inset 0 0 0 1.5px var(--tk); opacity: .7; }
+  .cal-day.today .ct-dot.miss, .cal-day.today .ct-dot.part{ box-shadow: inset 0 0 0 1.5px var(--ghost); }
+  .cal-marks{ position:absolute; right: 6px; bottom: 8px; z-index: 1; display:flex; gap: 2px; }
+  .cal-marks i{ display:block; width: 6px; height: 6px; background: var(--ec, var(--iris)); }
+  .cal-marks i.cm-task{ background: #F2C230; }
   .cal-day:focus-visible{ outline: 2px solid var(--bay); outline-offset: -2px; }
   .day-detail{ margin-top: 10px; padding: 14px 14px 6px; background: var(--paper); border: 1px solid var(--ink); }
   .dd-head{ display:flex; justify-content:space-between; align-items:flex-start; gap: 10px; margin-bottom: 6px; }
@@ -863,6 +941,94 @@
   .tp-col{ min-width:0; display:flex; flex-direction:column; }
   .tp-col-morning{ padding-right: 10px; border-right: 1px solid var(--ink); }
   .tp-col-evening{ padding-left: 10px; }
+  .tp-cols.tp-cols-single{ grid-template-columns: 1fr; }
+  .tp-cols-single .tp-col{ padding: 0; border-right: none; }
+  .tp-later{ margin-top: 14px; }
+  .tp-later{ margin-top: 0 !important; }
+  /* Must do / Maybe today */
+  .tp-split{ display:flex; align-items:center; gap: 8px; margin: 10px 0 2px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .tp-split::after{ content:''; flex:1; height: 1px; background: var(--ink); opacity: .55; }
+  .tp-split{ margin: 8px 0 !important; }
+  .tp-split-must{ margin-top: 10px; color: var(--ink); }
+  .tp-split-must::after{ opacity: .15; }
+  .tp-drop{ min-height: 34px; }
+  .tp-cols .tp-drop-maybe .tp-row:not(.done){ box-shadow: inset 3px 0 0 rgba(242,194,48,0.4) !important; }
+  .tp-drop-maybe .tp-text{ color: var(--ink-soft); }
+  /* To-do Soon + Coming side by side */
+  .tp-pair{ display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-top: 30px; align-items: start; }
+  .tp-pair-toggle{ width:100%; display:flex; justify-content:space-between; align-items:flex-end; gap: 8px; padding: 0 0 8px; background: none; border: none; border-bottom: 1px solid var(--ink); border-radius: 0; color: var(--ink); cursor: pointer; text-align: left; }
+  .tp-pair-toggle:focus-visible{ outline: 2px solid var(--bay); outline-offset: 2px; }
+  .tp-pair-toggle .tp-later-title{ font-family: var(--serif); font-weight: 300; font-size: 22px; line-height: 1.05; letter-spacing: -0.01em; }
+  .tp-pair-toggle[aria-expanded="true"] .fold-arrow{ transform: rotate(180deg); }
+  .tp-pair-body[hidden]{ display:none !important; }
+  @media (max-width:520px){ .tp-pair-toggle{ min-height: 60px; } }
+  .tp-pair .tp-row{ display:flex; flex-wrap: wrap !important; align-items:flex-start; gap: 4px 8px !important; padding: 9px 0 !important; box-shadow: none !important; }
+  .tp-pair .tp-check{ width: 18px; height: 18px; flex-shrink:0; }
+  .tp-pair .tp-text, .tp-pair .tp-edit{ flex: 1 1 0; min-width: 0; font-size: 13.5px !important; line-height: 1.3; }
+  .tp-pair .tp-due{ width: auto; flex: 0 0 100%; font-size: 9px; }
+  .tp-pair .tp-acts{ flex: 0 0 auto; display:flex; align-items:center; gap: 4px; margin-left: auto; }
+  .tp-pair .tp-acts .tp-del{ width: 14px; }
+  .tp-pair{ gap: 0; }
+  .tp-pair .tp-coming{ border-left: 1px solid var(--border); padding-left: 14px; margin-left: 14px; }
+  .tp-pair .tp-row{ gap: 4px 6px !important; }
+  .tp-pair .tp-check{ width: 16px; height: 16px; margin-top: 1px; }
+  .tp-pair .tp-text, .tp-pair .tp-edit{ font-size: 13px !important; overflow-wrap: normal; word-break: normal; }
+  .tp-pair .tp-letter, .tp-pair .plan-btn{ width: 20px; height: 20px; font-size: 10px !important; }
+  .tp-pair .tp-empty{ font-size: 12px; margin: 10px 0 4px; }
+  .tp-pair .tp-add-input{ font-size: 13.5px; }
+  .today-panel:not(.tp-dated) .tp-focus{
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--void);
+    padding: 16px 16px 12px;
+    margin-right: 5px;
+  }
+  .today-panel:not(.tp-dated) .tp-title{ font-size: 28px; }
+  .today-panel:not(.tp-dated) .tp-head{ padding-bottom: 10px; }
+  .tp-live{ display:flex; align-items:center; gap: 7px; color: var(--ink) !important; margin-bottom: 6px !important; }
+  .tp-live i{ width: 7px; height: 7px; border-radius: 50%; background: var(--infrared); box-shadow: 0 0 0 3px rgba(242,90,69,0.2); animation: tpPulse 2.4s ease-in-out infinite; }
+  @keyframes tpPulse{ 0%,100%{ box-shadow: 0 0 0 3px rgba(242,90,69,0.2); } 50%{ box-shadow: 0 0 0 6px rgba(242,90,69,0.05); } }
+  .today-panel:not(.tp-dated) .tp-add{ border-bottom: none; }
+  @media (max-width:480px){
+    .today-panel:not(.tp-dated) .tp-focus{ padding: 14px 11px 10px; box-shadow: 4px 4px 0 var(--void); margin-right: 4px; }
+    .tp-cols.tp-has-done{ grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); }
+    .tp-cols-single .tp-col.tp-col-done{ padding-left: 8px; margin-left: 8px; }
+    .tp-cols .tp-col-done .tp-del{ display:none; }
+  }
+  .tp-later-toggle.fold-toggle{ display:flex; justify-content:space-between; align-items:flex-end; gap: 10px; padding: 0 0 8px; border-bottom: 1px solid var(--ink); color: var(--ink); }
+  .tp-later-title{ font-family: var(--serif); font-weight: 300; font-size: 22px; line-height: 1.05; letter-spacing: -0.01em; }
+  #winGrid .grid-divider{ margin-top: 4px; padding-bottom: 8px; font-family: var(--serif); font-weight: 300; font-size: 22px; line-height: 1.05; letter-spacing: -0.01em; text-transform: none; align-items: flex-end; }
+  #winGrid .grid-divider::after{ content: none; }
+  #winGrid .gd-fold{ cursor: pointer; }
+  #winGrid .gd-fold:focus-visible{ outline: 2px solid var(--bay); outline-offset: 2px; }
+  #winGrid .gd-fold[aria-expanded="true"] .fold-arrow{ transform: rotate(180deg); }
+  #winGrid .gd-fold[aria-expanded="false"] .fold-arrow{ transform: none; }
+  #winGrid.fold-skills > .win-card:not(.todo-tile),
+  #winGrid.fold-lists > .win-card.todo-tile{ display: none; }
+  #winGrid .grid-divider:not(:first-child){ margin-top: 18px; }
+  .gd-actions{ display:flex; align-items:center; gap: 12px; font-family: var(--mono); font-size: 12px; }
+  .gd-add{ width: 24px; height: 24px; padding: 0; display:flex; align-items:center; justify-content:center; background: transparent; color: var(--ink); border: 1px solid var(--ink); cursor: pointer; font-family: var(--mono); font-size: 15px; line-height: 1; }
+  .gd-add:hover{ background: var(--void); color: var(--ghost); }
+  .gd-add:focus-visible{ outline: 2px solid var(--bay); outline-offset: 2px; }
+  .tp-list-later .tp-row{ flex-wrap: nowrap; gap: 9px; padding: 7px 0 7px 2px; }
+  .tp-list-later .tp-text, .tp-list-later .tp-edit{ font-size: 13.5px; }
+  .tp-list-later .tp-check{ width: 18px; height: 18px; }
+  .tp-later .tp-empty{ font-size: 12px; margin: 10px 0 4px; }
+  .tp-cols.tp-has-done{ grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .tp-cols-single .tp-col.tp-col-done{ padding-left: 10px; margin-left: 10px; border-left: 1px solid var(--border); }
+  .tp-cols .tp-col-done .tp-done-toggle{ margin-top: 0; padding: 9px 0 7px; }
+  .tp-cols .tp-col-done .tp-row{ gap: 6px; padding: 6px 0; flex-wrap: nowrap; align-items: flex-start; }
+  .tp-cols .tp-col-done .tp-check{ width: 14px; height: 14px; margin-top: 1px; }
+  .tp-cols .tp-col-done .tp-check svg{ width: 9px; height: 9px; }
+  .tp-cols .tp-col-done .tp-text{ font-size: 11.5px; line-height: 1.3; overflow-wrap: break-word; word-break: normal; }
+  .tp-cols .tp-col-done .tp-del{ width: 14px; height: 16px; font-size: 13px; }
+  .tp-cols .tp-col-done{ opacity: 0.55; transition: opacity .15s ease; }
+  .tp-cols .tp-col-done:hover, .tp-cols .tp-col-done:focus-within{ opacity: 0.85; }
+  .tp-cols .tp-col-done .tp-row.done .tp-check{ background: transparent; border-color: var(--border); color: var(--ink-soft); }
+  .tp-cols .tp-col-done .tp-row{ border-bottom-color: transparent; }
+  .tp-cols .tp-col-done .tp-done-toggle{ border-bottom-color: var(--border-soft); }
+  .tp-cols-single .tp-col.tp-col-done{ border-left-color: var(--border-soft); }
   .tp-col-head{
     display:flex; justify-content:space-between; align-items:center;
     padding: 9px 0 7px; border-bottom: 1px solid var(--border);
@@ -986,11 +1152,21 @@
   .cal-evdots i{ display:block; width: 5px; height: 5px; border-radius: 50%; background: var(--ec, var(--iris)); }
   .cal-day.today .cal-evdots i{ box-shadow: 0 0 0 1px var(--void); }
   .ev-block{ margin: 0 0 26px; }
+  .fold-toggle{ width:100%; background:transparent; border:none; border-radius:0; padding:0; margin:0; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+  .fold-toggle:focus-visible{ outline: 2px solid var(--bay); outline-offset: 2px; }
+  .fold-arrow{ display:inline-block; margin-left: 8px; font-family: var(--mono); font-size: 12px; line-height: 1; color: var(--ink); transition: transform .18s ease; }
+  .fold-toggle[aria-expanded="true"] .fold-arrow{ transform: rotate(180deg); }
+  .ev-head.fold-toggle{ display:flex; padding: 0 0 8px; border-bottom: 1px solid var(--ink); }
+  .fold-body[hidden]{ display:none !important; }
+  .tp-done-toggle{ display:flex; justify-content:space-between; align-items:center; margin-top: 14px; padding: 8px 0; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .tp-done-toggle:hover{ color: var(--ink); }
+  .todo-section-label.fold-toggle{ display:flex; justify-content:space-between; align-items:center; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin: 10px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--ink); }
   .ev-head{ display:flex; justify-content:space-between; align-items:flex-end; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); }
   .ev-title{ font-family: var(--serif); font-weight: 300; font-size: 22px; line-height:1.05; margin:0; }
   .ev-count{ font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; }
   .ev-list{ list-style:none; margin:0; padding:0; }
-  .ev-row{ display:flex; align-items:flex-start; gap: 10px; padding: 9px 0 9px 10px; border-bottom: 1px solid var(--border-soft); box-shadow: inset 3px 0 0 var(--ec); }
+  .ev-row{ display:flex; align-items:flex-start; gap: 10px; padding: 9px 0 9px 10px; border-bottom: 1px solid var(--border-soft); box-shadow: inset 3px 0 0 #3A78DB; }
+  .tp-cols .tp-col:not(.tp-col-done) .tp-row:not(.done){ box-shadow: inset 3px 0 0 #F2C230; padding-left: 10px !important; }
   .ev-row.past{ opacity: 0.5; }
   .ev-time{ flex-shrink:0; width: 92px; font-family: var(--mono); font-size: 10.5px; line-height: 1.6; color: var(--ink-soft); }
   .ev-main{ flex:1; min-width:0; }
@@ -1031,6 +1207,35 @@
   .sync-status[data-state="offline"]{ color: var(--shore); }
   .sync-status[data-state="error"]{ color: var(--infrared); }
   .card code{ font-family: var(--mono); font-size: 12px; background: rgba(11,11,11,0.06); padding: 1px 4px; }
+
+  /* ===== laptop / desktop layout ===== */
+  @media (min-width: 1024px){
+    body{ padding-top: 34px; }
+    .stage{ max-width: 1200px; }
+    .card{ width: 100%; max-width: 720px; margin: 0 auto; padding: 40px 44px 60px; }
+    .card::after{ left: 44px; right: 44px; }
+    .card.is-home{
+      max-width: none;
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      column-gap: 48px;
+      align-items: start;
+    }
+    .card.is-home > .grid-header,
+    .card.is-home > .win-grid{ grid-column: 1 / -1; }
+    .card.is-home > .grid-header h1{ font-size: 60px; }
+    .card.is-home .home-left{ position: sticky; top: 20px; }
+    .card.is-home .home-right{ min-width: 0; }
+    .card.is-home .today-panel{ margin-bottom: 26px; }
+    .card.is-home .win-grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+    .card.is-home .win-card{ min-height: 150px; }
+    .card.is-home .win-title{ font-size: 21px; }
+    .outer-actions, .account-bar{ max-width: none; }
+    .card:not(.is-home) ~ .outer-actions, .card:not(.is-home) ~ .account-bar{ max-width: 720px; margin-left: auto; margin-right: auto; }
+  }
+  @media (min-width: 1024px) and (max-height: 760px){
+    .card.is-home .home-left{ position: static; }
+  }
 
   @media (prefers-reduced-motion: reduce){
     *{ transition:none !important; animation:none !important; }
@@ -1310,92 +1515,93 @@ function iconFor(s){ return ICONS[s.iconKey] || ICONS.custom; }
 
 const DEFAULT_STEPS = [
   {
-    id:"athkar", iconKey:"beads", title:"🕋 Athkar + Quran",
-    sub:"",
+    id:"ex-morning", iconKey:"custom", title:"🌅 Morning reset",
+    sub:"Start the day calm and clear.",
     links:[
-      {label:"Open App", url:"https://apps.apple.com/sa/app/golden-quran-%D8%A7%D9%84%D9%85%D8%B5%D8%AD%D9%81-%D8%A7%D9%84%D8%B0%D9%87%D8%A8%D9%8A/id852497554", primary:true}
+      {label:"Drink a glass of water", url:"", primary:true},
+      {label:"5-minute stretch", url:"", primary:false},
+      {label:"Make the bed", url:"", primary:false}
     ]
   },
   {
-    id:"talk", iconKey:"custom", title:"🔋Power",
+    id:"ex-reading", iconKey:"book", title:"📖 Read 10 pages",
+    sub:"A few pages a day adds up to a book a month.",
+    links:[
+      {label:"Current book", url:"", primary:true},
+      {label:"Find your next read", url:"https://www.goodreads.com", primary:false}
+    ]
+  },
+  {
+    id:"ex-move", iconKey:"custom", title:"🏃 Move your body",
+    sub:"Any movement counts.",
+    links:[
+      {label:"Walk 8,000 steps", url:"", primary:true},
+      {label:"20-minute workout", url:"https://www.youtube.com/results?search_query=20+minute+home+workout", primary:false}
+    ]
+  },
+  {
+    id:"ex-learn", iconKey:"headphones", title:"🧠 Learn something",
+    sub:"Ten minutes of something new.",
+    links:[
+      {label:"Language lesson", url:"https://www.duolingo.com", primary:true},
+      {label:"Watch a TED talk", url:"https://www.ted.com/talks", primary:false}
+    ]
+  },
+  {
+    id:"ex-health", iconKey:"custom", title:"💊 Health check",
+    sub:"Small habits, big difference.",
+    links:[
+      {label:"Take vitamins", url:"", primary:true},
+      {label:"Drink 8 glasses of water", url:"", primary:false}
+    ]
+  },
+  {
+    id:"ex-news", iconKey:"news", title:"📰 Catch up on news",
+    sub:"Stay informed without doomscrolling.",
+    links:[
+      {label:"BBC News", url:"https://www.bbc.com/news", primary:true},
+      {label:"Reuters", url:"https://www.reuters.com", primary:false}
+    ]
+  },
+  {
+    id:"ex-connect", iconKey:"chat", title:"💬 Stay in touch",
     sub:"Reach out to someone you care about.",
     links:[
-      {label:"Reflect on confidence", url:"-", primary:true},
-      {label:"Talk to someone", url:"-", primary:false}
+      {label:"Message a friend or family member", url:"", primary:true}
     ]
   },
   {
-    id:"bills", iconKey:"custom", title:"💊 Take Pills",
-    sub:"Antihistamine+ Magnesium + Createin",
-    links:[]
-  },
-  {
-    id:"alarabiya", iconKey:"news", title:"📰 News",
-    sub:"A second angle on today's news.",
+    id:"ex-evening", iconKey:"custom", title:"🌙 Evening wind-down",
+    sub:"Close the day well, sleep better.",
     links:[
-      {label:"Al Arabiya", url:"https://apps.apple.com/sa/app/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-alarabiya/id542914362", primary:true},
-      {label:"BBC", url:"https://www.bbc.com/news", primary:false},
-      {label:"Match check", url:"https://apps.apple.com/sa/app/365scores-live-scores-news/id571801488", primary:false},
-      {label:"٨", url:"https://www.snapchat.com/add/thmanyahsports", primary:false}
-    ]
-  },
-  {
-    id:"calendar", iconKey:"calendar", title:"🗓️ Calendar + Mail",
-    sub:"A quick look at the day ahead — meetings, plans, gaps.",
-    links:[
-      {label:"Calendar", url:"https://apps.apple.com/sa/app/calendar/id1108185179", primary:true},
-      {label:"Mail", url:"https://apps.apple.com/sa/app/mail/id1108187098", primary:false}
-    ]
-  },
-  {
-    id:"stocks", iconKey:"custom", title:"📈 Stocks",
-    sub:"See how your portfolio is doing today.",
-    links:[
-      {label:"Open App", url:"https://apps.apple.com/sa/app/sahm-stock-trading/id1630074503", primary:true}
-    ]
-  },
-  {
-    id:"podcast", iconKey:"headphones", title:"☕️ English",
-    sub:"Listen to an English-language podcast to keep your ear tuned.",
-    links:[
-      {label:"⚫️ BBC Businesses", url:"https://podcasts.apple.com/sa/podcast/business-daily/id261786876", primary:true},
-      {label:"🟡 English Businesses", url:"https://podcasts.apple.com/sa/podcast/business-english-from-all-ears-english/id1650591741", primary:false},
-      {label:"⚪️ English speaking practice", url:"https://chatgpt.com/g/g-p-698dc7995f2c8191841e3fbd133ac12b", primary:false},
-      {label:"🔵 Transitions", url:"https://apps.apple.com/sa/app/google-translate/id414706506", primary:false}
-    ]
-  },
-  {
-    id:"reading", iconKey:"book", title:"📖 Book reading",
-    sub:"Read at least 5 pages of a book.",
-    links:[
-      {label:"Before Coffee Gets Cold", url:"--", primary:true},
-      {label:"Hydrogen", url:"https://www.iea.org/energy-system/low-emissions-fuels/hydrogen", primary:false},
-      {label:"Energy", url:"https://www.nature.com/nenergy/", primary:false},
-      {label:"Materials", url:"https://www.nature.com/nmat/", primary:false},
-      {label:"3D Printing", url:"https://www.tctmagazine.com/", primary:false}
-    ]
-  },
-  {
-    id:"custom-weight-msqllgua", iconKey:"custom", title:"🍉 Health",
-    sub:"",
-    links:[
-      {label:"Log body’s Weight", url:"https://apps.apple.com/sa/app/renpho-health/id1543340610", primary:true},
-      {label:"Walk 10000 steps", url:"https://apps.apple.com/sa/app/pedometer/id712286167", primary:false},
-      {label:"Gym", url:"https://plate-plan-maker.vercel.app/", primary:false}
+      {label:"Plan tomorrow", url:"", primary:true},
+      {label:"Write 3 lines in a journal", url:"", primary:false},
+      {label:"No screens 30 min before bed", url:"", primary:false}
     ]
   }
 ];
 
-const DEFAULT_NOTES = {
-  "athkar": "أبدأ يومي بأذكار الصباح لأشحن نفسي روحيًا وأحافظ على صلتي بالله قبل أي شيء آخر.",
-  "bills": "أتابع فواتيري وأسددها في وقتها لأتجنب الرسوم المتأخرة وأحافظ على تنظيم أموري المالية.",
-  "alarabiya": "أتابع أهم الأخبار المحلية والعالمية يوميًا لأبقى مطلعًا وواعيًا بما يحدث حولي في العالم.",
-  "calendar": "أراجع مواعيدي واجتماعاتي لهذا اليوم لأنظّم وقتي وأبدأ يومي بخطة واضحة.",
-  "podcast": "أستمع إلى بودكاست باللغة الإنجليزية يوميًا لتحسين مهارتي في الاستماع والتعرّض المستمر للغة.",
-  "reading": "أقرأ 5 صفحات على الأقل يوميًا من كتاب لتوسيع معرفتي وبناء عادة القراءة المستمرة.",
-  "talk": "أتواصل مع شخص مقرب يوميًا للحفاظ على علاقاتي الاجتماعية وعدم الانعزال.",
-  "stocks": "أتابع أسهمي واستثماراتي يوميًا لأبقى مطلعًا على أدائها واتخاذ قرارات مدروسة."
-};
+const DEFAULT_NOTES = {};
+
+// Example lists shown under "Tasks / Ideas" on a brand-new account.
+function exampleTodoLists(){
+  const lists = [
+    { id: 'todo-list-today', title: 'Today tasks' },
+    { id: 'ex-list-groceries', title: '🛒 Groceries' },
+    { id: 'ex-list-ideas', title: '💡 Ideas' },
+    { id: 'ex-list-home', title: '🏠 Home' }
+  ];
+  const items = {
+    'ex-list-groceries': ['Milk', 'Eggs', 'Bread', 'Fresh fruit', 'Coffee beans'],
+    'ex-list-ideas': ['Start a side project', 'Plan a weekend trip', 'Learn to cook a new dish', 'Try a new hobby'],
+    'ex-list-home': ['Fix the leaking tap', 'Sort out the wardrobe', 'Water the plants']
+  };
+  const todosOut = [];
+  Object.entries(items).forEach(([listId, texts]) => texts.forEach((text, i) => {
+    todosOut.push({ id: listId + '-' + i, listId, text, color: '', done: false, order: i, slot: 'morning' });
+  }));
+  return { lists, todos: todosOut };
+}
 
 let STEPS = [];
 let view = 'grid'; // 'grid' | 'detail' | 'manage' | 'add' | 'progress' | 'todo'
@@ -1427,11 +1633,28 @@ const TODO_COLORS = [
   { key:'infrared', hex:'#F25A45' },
   { key:'stone',    hex:'#D9D6CF' }
 ];
+const SKILL_COLORS = [
+  { key:'Auto', hex:'' },
+  { key:'Teal', hex:'#2E8B7F' },
+  { key:'Purple', hex:'#7357D6' },
+  { key:'Blue', hex:'#3A6FD0' },
+  { key:'Red', hex:'#D9473A' },
+  { key:'Beige', hex:'#C8A57F' }
+];
+function skillColorRowHTML(current){
+  return `<div class="edit-field"><label>Box colour</label><div class="todo-color-row skill-color-row">${SKILL_COLORS.map(c => `<button type="button" class="todo-swatch skill-swatch ${((current||'') === c.hex) ? 'selected' : ''} ${c.hex ? '' : 'swatch-auto'}" data-color="${c.hex}" style="${c.hex ? 'background:' + c.hex : ''}" aria-label="${c.key}" title="${c.key}">${c.hex ? '' : 'A'}</button>`).join('')}</div></div>`;
+}
+function wireSkillColorRow(draft){
+  card.querySelectorAll('.skill-swatch').forEach(btn => btn.addEventListener('click', () => {
+    draft.color = btn.dataset.color;
+    card.querySelectorAll('.skill-swatch').forEach(b => b.classList.toggle('selected', b === btn));
+  }));
+}
 const LIST_COLORS = [
   ...TODO_COLORS
 ];
 function listColorOf(list){
-  return (list && list.color) || LIST_COLORS[0].hex;
+  return LIST_COLORS[0].hex; // every list uses the same beige
 }
 function todoIconWithColor(hex){
   const strokeColor = `color-mix(in srgb, ${hex} 75%, #F5F6FA)`;
@@ -1799,7 +2022,30 @@ async function recordLinkHistory(id, s){
 }
 
 // Bulk toggle: used by the grid checkmark and the detail "Mark complete" button.
+const tileShownPct = {};
+function animateTileRings(){
+  const tiles = card.querySelectorAll('.win-card[data-p]');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    tiles.forEach(el => { el.style.setProperty('--p', el.dataset.p); tileShownPct[el.dataset.id] = +el.dataset.p; });
+  }));
+}
+function captureTileRects(){
+  const m = {};
+  card.querySelectorAll('.win-card[data-id]').forEach(el => { m[el.dataset.id] = el.getBoundingClientRect(); });
+  return m;
+}
+function playTileMoves(first){
+  if (!first || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  card.querySelectorAll('.win-card[data-id]').forEach(el => {
+    const a = first[el.dataset.id]; if (!a) return;
+    const b = el.getBoundingClientRect();
+    const dx = a.left - b.left, dy = a.top - b.top;
+    if (!dx && !dy) return;
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.7,.2,1)' });
+  });
+}
 async function toggleComplete(id){
+  const first = view === 'grid' ? captureTileRects() : null;
   ensureToday();
   const s = STEPS.find(x => x.id === id);
   if (!s) return;
@@ -1817,7 +2063,8 @@ async function toggleComplete(id){
   await saveCompletions();
   await recordHistory(id, nowDone);
   if (prog.hasLinks) await recordLinkHistory(id, s);
-  render();
+  await render();
+  playTileMoves(first);
 }
 
 // Per-link toggle: checking/unchecking one link's square.
@@ -1882,16 +2129,6 @@ function setProgress(){
 }
 
 // ---------- skill note ----------
-function renderSkillNote(s){
-  const note = skillNotes[s.id] || '';
-  const wrap = document.createElement('div');
-  wrap.className = 'skill-note';
-  wrap.innerHTML = `
-    <div class="skill-note-label">Skill I'm improving here</div>
-    <p class="skill-note-text ${note ? '' : 'skill-note-empty'}" dir="auto">${note ? note.replace(/</g,'&lt;') : 'Not set yet — edit this window to add one.'}</p>
-  `;
-  card.appendChild(wrap);
-}
 
 // ---------- weight detail ----------
 async function renderWeightStep(s){
@@ -1901,7 +2138,7 @@ async function renderWeightStep(s){
 
   card.innerHTML = `
     ${iconFor(s)}
-    <h1>${s.title}</h1>
+    <h1>${escHTML(s.title)}</h1>
     <p class="sub">${s.sub}</p>
     <div class="weight-row">
       <input class="weight-input" id="weightInput" type="number" inputmode="decimal" step="0.1" dir="ltr"
@@ -1948,6 +2185,18 @@ async function renderWeightStep(s){
 // ---------- link detail (view mode) ----------
 const CHECK_SVG_SM = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg>';
 
+// Returns a usable link, or '' when the text isn't a real web/app address (e.g. "-", "--", "todo").
+function realUrl(raw){
+  let u = String(raw || '').trim();
+  if (!u) return '';
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(u)) u = 'https://' + u; // bare domain like bbc.com
+  try{
+    const x = new URL(u);
+    if (x.protocol === 'http:' || x.protocol === 'https:') return /\.[a-z]{2,}$/i.test(x.hostname) ? x.href : '';
+    if (/^(javascript|data|file|blob):$/i.test(x.protocol)) return '';
+    return x.href; // app links like shortcuts:// or mailto:
+  }catch(e){ return ''; }
+}
 function renderLinkStep(s){
   const allLinks = s.links || [];
   const linkState = (completions.links && completions.links[s.id]) || {};
@@ -1955,18 +2204,17 @@ function renderLinkStep(s){
   const visible = allLinks.map((l,i)=>({l,i})).filter(({l}) => isLinkDueToday(l));
   card.innerHTML = `
     ${iconFor(s)}
-    <h1>${s.title}</h1>
+    <h1>${escHTML(s.title)}</h1>
     ${s.sub ? `<p class="sub">${s.sub}</p>` : ''}
     ${visible.length ? `<div class="link-list" id="linkListView">
       ${visible.map(({l,i}) => {
         const checked = !!linkState[i];
-        const hasUrl = !!(l.url && l.url.trim());
-        const item = hasUrl
-          ? `<a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="btn-arrow">↗</span></a>`
-          : `<div class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn link-no-url">${l.label}</div>`;
+        const href = realUrl(l.url);
+        const item = href
+          ? `<a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${escHTML(href)}" target="_blank" rel="noopener">${escHTML(l.label)} <span class="btn-arrow">↗</span></a>`
+          : `<div class="link-row-btn link-task" dir="auto">${escHTML(l.label)}</div>`;
         return `
         <div class="link-row" data-idx="${i}">
-          ${visible.length > 1 ? `<button class="link-drag" aria-label="Drag to reorder">⠿</button>` : ''}
           ${item}
           <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark link incomplete':'Mark link complete'}">${checked?CHECK_SVG_SM:''}</button>
         </div>`;
@@ -1978,97 +2226,82 @@ function renderLinkStep(s){
   });
   setupLinkDragReorder(s.id);
 }
+// Press and hold any row to drag it — no handle. Works with mouse and touch.
+let sortJustDragged = false;
+// "← Overview" on any screen goes back to the home screen
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('.nav-overview');
+  if (!b) return;
+  view = 'grid'; activeId = null; activeTodoListId = null; editingTodoListTitle = null; addDraft = null; calSelectedKey = null;
+  try { removeConfirmTodoList = null; } catch(_){}
+  render();
+  window.scrollTo(0, 0);
+});
+document.addEventListener('click', (e) => { if (sortJustDragged){ e.preventDefault(); e.stopPropagation(); sortJustDragged = false; } }, true);
+function makeSortable(container, rowSel, keyAttr, onDone){
+  if (!container) return;
+  const rows = () => Array.from(container.querySelectorAll(':scope > ' + rowSel));
+  if (rows().length < 2) return;
+  rows().forEach(row => row.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest('button, input, label, textarea, .tp-menu')) return;
+    const sx = e.clientX, sy = e.clientY;
+    let timer = null;
+    const cancel = () => {
+      clearTimeout(timer);
+      document.removeEventListener('pointermove', pre);
+      document.removeEventListener('pointerup', cancel);
+      document.removeEventListener('pointercancel', cancel);
+    };
+    const pre = ev => { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) cancel(); };
+    document.addEventListener('pointermove', pre);
+    document.addEventListener('pointerup', cancel);
+    document.addEventListener('pointercancel', cancel);
+    timer = setTimeout(() => { cancel(); startSort(e, row); }, 350);
+  }));
+  function startSort(e, row){
+    const r = row.getBoundingClientRect();
+    const ghost = row.cloneNode(true);
+    ghost.classList.add('sort-ghost');
+    Object.assign(ghost.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', zIndex: 60, pointerEvents: 'none', margin: 0 });
+    document.body.appendChild(ghost);
+    row.classList.add('sort-placeholder');
+    const offY = e.clientY - r.top;
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch(_){}
+    const blockTouch = ev => ev.preventDefault();
+    document.addEventListener('touchmove', blockTouch, { passive: false });
+    const onMove = ev => {
+      ghost.style.top = (ev.clientY - offY) + 'px';
+      const others = rows().filter(x => x !== row);
+      const before = others.find(x => { const b = x.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; });
+      if (before) container.insertBefore(row, before);
+      else { const last = others[others.length - 1]; if (last) last.after(row); }
+      const edge = 60;
+      if (ev.clientY < edge) window.scrollBy(0, -12); else if (ev.clientY > window.innerHeight - edge) window.scrollBy(0, 12);
+    };
+    const onUp = async () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      document.removeEventListener('touchmove', blockTouch);
+      ghost.remove();
+      row.classList.remove('sort-placeholder');
+      sortJustDragged = true;
+      setTimeout(() => { sortJustDragged = false; }, 400);
+      await onDone(rows().map(x => x.getAttribute(keyAttr)));
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  }
+}
 function setupLinkDragReorder(stepId){
   const listEl = document.getElementById('linkListView');
   if (!listEl) return;
-  listEl.querySelectorAll('.link-drag').forEach(handle=>{
-    handle.addEventListener('pointerdown', (e)=> beginLinkDrag(e, listEl, stepId));
+  makeSortable(listEl, '.link-row', 'data-idx', async (idxs) => {
+    await reorderStepLinks(stepId, idxs.map(x => parseInt(x, 10)));
+    render();
   });
-}
-function beginLinkDrag(e, listEl, stepId){
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  const row = e.target.closest('.link-row');
-  if (!row) return;
-  e.preventDefault();
-
-  const rows = Array.from(listEl.children).filter(el=> el.classList.contains('link-row'));
-  if (rows.length < 2) return;
-  const listRect = listEl.getBoundingClientRect();
-  const rects = rows.map(r=> r.getBoundingClientRect());
-  const GAP = 10;
-
-  listEl.style.height = listRect.height + 'px';
-  rows.forEach((r,i)=>{
-    r.style.position = 'absolute';
-    r.style.left = '0';
-    r.style.right = '0';
-    r.style.top = (rects[i].top - listRect.top) + 'px';
-    r.style.transition = 'top 0.18s ease';
-    r.style.width = '100%';
-  });
-  listEl.style.position = 'relative';
-
-  const startIndex = rows.indexOf(row);
-  row.style.transition = 'none';
-  row.style.zIndex = 5;
-  row.classList.add('dragging');
-
-  let order = rows.map(r=> r.dataset.idx);
-  const heightOf = idx => rects[rows.findIndex(r=> r.dataset.idx === idx)].height;
-  const startY = e.clientY;
-  const rowStartTop = rects[startIndex].top - listRect.top;
-
-  function topsFromOrder(){
-    const tops = {};
-    let c = 0;
-    order.forEach(idx=>{ tops[idx] = c; c += heightOf(idx) + GAP; });
-    return tops;
-  }
-
-  function onMove(ev){
-    const dy = ev.clientY - startY;
-    const newTop = rowStartTop + dy;
-    row.style.top = newTop + 'px';
-    const rowCenter = newTop + rects[startIndex].height / 2;
-
-    const fromIdx = order.indexOf(row.dataset.idx);
-    const tops = topsFromOrder();
-    let targetIdx = fromIdx;
-    for (let i = 0; i < order.length; i++){
-      if (order[i] === row.dataset.idx) continue;
-      const mid = tops[order[i]] + heightOf(order[i]) / 2;
-      if (i < fromIdx && rowCenter < mid){ targetIdx = i; break; }
-      if (i > fromIdx && rowCenter > mid){ targetIdx = i; }
-    }
-    if (targetIdx !== fromIdx){
-      order.splice(fromIdx, 1);
-      order.splice(targetIdx, 0, row.dataset.idx);
-      const newTops = topsFromOrder();
-      order.forEach(idx=>{
-        if (idx === row.dataset.idx) return;
-        const r = rows.find(rr=> rr.dataset.idx === idx);
-        r.style.top = newTops[idx] + 'px';
-      });
-    }
-  }
-
-  function onUp(){
-    document.removeEventListener('pointermove', onMove);
-    document.removeEventListener('pointerup', onUp);
-    row.classList.remove('dragging');
-    row.style.zIndex = '';
-    const tops = topsFromOrder();
-    row.style.transition = 'top 0.18s ease';
-    row.style.top = tops[row.dataset.idx] + 'px';
-    setTimeout(async ()=>{
-      const oldIndices = order.map(idx => parseInt(idx, 10));
-      await reorderStepLinks(stepId, oldIndices);
-      render();
-    }, 180);
-  }
-
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp, { once: true });
 }
 async function reorderStepLinks(stepId, oldIndicesInNewOrder){
   const step = STEPS.find(x=> x.id === stepId);
@@ -2158,23 +2391,25 @@ function captureEditDraftFromInputs(){
   const links = [];
   rows.forEach((row, i)=>{
     const label = row.querySelector('[data-k="label"]').value;
-    const url = row.querySelector('[data-k="url"]').value;
-    const existingDays = (editDraft.links[i] && editDraft.links[i].days) || [0,1,2,3,4,5,6];
-    links.push({ label, url, days: existingDays });
+    const urlEl = row.querySelector('[data-k="url"]');
+    const url = urlEl ? urlEl.value : '';
+    const prev = editDraft.links[i] || {};
+    links.push({ label, url, days: prev.days || [0,1,2,3,4,5,6], withLink: !!urlEl });
   });
   editDraft.links = links;
 }
 
 function renderLinkRowsHTML(links){
   if (!links.length){
-    return '<p class="skill-note-empty" style="margin:4px 0 12px;">No links added — this window will just show its title, description, and skill note.</p>';
+    return '<p class="skill-note-empty" style="margin:4px 0 12px;">No items yet — this skill will just show its title and description.</p>';
   }
-  return links.map((l,i) => `
+  return links.map((l,i) => {
+    return `
     <div class="link-edit-group">
       <div class="link-edit-row">
         <div class="link-edit-fields">
-          <input type="text" class="edit-input" dir="auto" data-k="label" placeholder="Button label (e.g. Open Gmail)" value="${(l.label||'').replace(/"/g,'&quot;')}">
-          <input type="url" class="edit-input" dir="ltr" data-k="url" placeholder="https:// (optional)" value="${(l.url||'').replace(/"/g,'&quot;')}">
+          <input type="text" class="edit-input" dir="auto" data-k="label" placeholder="Name (e.g. Read 5 pages)" value="${(l.label||'').replace(/"/g,'&quot;')}">
+          <input type="url" class="edit-input" dir="ltr" data-k="url" placeholder="Link (optional)" value="${(l.url||'').replace(/"/g,'&quot;')}">
         </div>
         <button class="link-remove-btn" data-idx="${i}" aria-label="Remove link">✕</button>
       </div>
@@ -2182,10 +2417,32 @@ function renderLinkRowsHTML(links){
         ${renderScheduleHTML(`link${i}`, l.days || [0,1,2,3,4,5,6], 'Shows on')}
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 // Wires the per-link weekday pickers rendered by renderLinkRowsHTML. `linksRef` must be
 // the live draft.links array so clicks mutate day selections in place immediately.
+function wireLinkKindButtons(getDraft, capture){
+  card.querySelectorAll('.link-kind-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      capture();
+      const l = getDraft().links[parseInt(btn.dataset.idx, 10)];
+      if (!l) return;
+      l.withLink = !l.withLink;
+      if (!l.withLink) l.url = '';
+      render();
+      if (l.withLink){
+        const inp = card.querySelectorAll('.link-edit-group')[parseInt(btn.dataset.idx, 10)]?.querySelector('[data-k="url"]');
+        if (inp) inp.focus();
+      }
+    });
+  });
+}
+function addButtonsHTML(){
+  return `<div class="add-item-row">
+    <button class="edit-link-btn" id="addItemPlainBtn">+ Add item</button>
+  </div>`;
+}
 function wireLinkScheduleBlocks(linksRef){
   linksRef.forEach((l, i) => {
     if (!l.days) l.days = [0,1,2,3,4,5,6];
@@ -2196,7 +2453,7 @@ function wireLinkScheduleBlocks(linksRef){
 function renderWindowEditor(s){
   card.innerHTML = `
     ${iconFor(s)}
-    <h1 style="font-size:24px;">Edit this window</h1>
+    <h1 style="font-size:24px;">Edit skill</h1>
     <div class="edit-fields">
       <div class="edit-field">
         <label>Title</label>
@@ -2206,17 +2463,14 @@ function renderWindowEditor(s){
         <label>Short description (optional)</label>
         <input type="text" class="edit-input" dir="auto" id="editSubInput" value="${editDraft.sub.replace(/"/g,'&quot;')}">
       </div>
+      ${skillColorRowHTML(editDraft.color)}
       ${renderScheduleHTML('edit', editDraft.days)}
-      <div class="edit-field">
-        <label>Skill I'm improving here (optional)</label>
-        <textarea class="skill-note-input" id="editNoteInput" rows="3" dir="auto" placeholder="e.g. Reading more fluently, staying informed without doomscrolling, tracking weight consistently...">${editDraft.note.replace(/</g,'&lt;')}</textarea>
-      </div>
     </div>
     <div class="edit-field" style="margin-bottom:10px;">
-      <label>Links (optional — add as many as you like)</label>
+      <label>Items — add a link to open it, or leave it empty for a task</label>
     </div>
     <div id="linkRowsWrap">${renderLinkRowsHTML(editDraft.links)}</div>
-    <button class="edit-link-btn" id="addLinkRowBtn" style="margin-bottom:16px;">+ Add another link</button>
+    ${addButtonsHTML()}
     <div class="actions">
       <button class="btn btn-primary" id="saveWindowBtn">Save changes</button>
       <button class="btn btn-secondary" id="cancelWindowBtn">Cancel</button>
@@ -2224,11 +2478,14 @@ function renderWindowEditor(s){
     <div class="save-msg" id="windowErrMsg"></div>
   `;
 
-  document.getElementById('addLinkRowBtn').addEventListener('click', ()=>{
+  const addEditItem = withLink => {
     captureEditDraftFromInputs();
-    editDraft.links.push({ label:'', url:'', days:[0,1,2,3,4,5,6] });
+    editDraft.links.push({ label:'', url:'', days:[0,1,2,3,4,5,6], withLink });
     render();
-  });
+  };
+  document.getElementById('addItemPlainBtn').addEventListener('click', ()=> addEditItem(false));
+  wireLinkKindButtons(()=> editDraft, captureEditDraftFromInputs);
+  wireSkillColorRow(editDraft);
   card.querySelectorAll('.link-remove-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       captureEditDraftFromInputs();
@@ -2250,7 +2507,7 @@ function renderWindowEditor(s){
     const finalLinks = editDraft.links
       .filter(l => (l.url||'').trim() || (l.label||'').trim())
       .map((l,i) => ({
-        label: (l.label||'').trim() || 'Open App',
+        label: (l.label||'').trim() || ((l.url||'').trim() ? 'Open App' : 'Task'),
         url: (l.url||'').trim(),
         primary: i===0,
         schedule: computeScheduleFromDays(l.days || [0,1,2,3,4,5,6])
@@ -2261,7 +2518,7 @@ function renderWindowEditor(s){
     await saveSkillNotes();
     const idx = STEPS.findIndex(x => x.id === s.id);
     if (idx !== -1){
-      STEPS[idx] = { ...STEPS[idx], title, sub: editDraft.sub.trim(), links: finalLinks, schedule };
+      STEPS[idx] = { ...STEPS[idx], title, sub: editDraft.sub.trim(), links: finalLinks, schedule, color: editDraft.color || '' };
       await saveSteps();
     }
     editingWindow = null;
@@ -2326,7 +2583,7 @@ function tasksForDay(k){
   });
   if (k === todayK){
     const todayList = todoLists.find(isPinnedTodayList);
-    if (todayList) todos.filter(t => t.listId === todayList.id && !t.done && !isComing(t)).forEach(t => out.pending.push(logEntryFor(t)));
+    if (todayList) todos.filter(t => t.listId === todayList.id && !t.done && !t.later && !isComing(t)).forEach(t => out.pending.push(logEntryFor(t)));
   } else if (k > todayK){
     todos.filter(t => !t.done && t.dueDate === k).forEach(t => out.planned.push(logEntryFor(t)));
   }
@@ -2356,7 +2613,7 @@ function renderDayDetail(k){
     return `<li class="dd-row"><span class="dd-mark ${cls}"></span><span class="dd-text" dir="auto">${escHTML(s.title)}</span><span class="dd-state ${cls}">${state}</span></li>`;
   }).join('');
   const t = tasksForDay(k);
-  const taskRow = (e, cls, state) => `<li class="dd-row"><span class="dd-mark ${cls}"></span><span class="dd-text" dir="auto">${escHTML(e.text)}</span><span class="dd-state ${cls}">${e.slot === 'evening' ? 'PM · ' : (e.slot === 'morning' ? 'AM · ' : '')}${state}</span></li>`;
+  const taskRow = (e, cls, state) => `<li class="dd-row"><span class="dd-mark ${cls}"></span><span class="dd-text" dir="auto">${escHTML(e.text)}</span><span class="dd-state ${cls}">${state}</span></li>`;
   const taskRows = [
     ...t.pending.map(e => taskRow(e, 'open', 'To do')),
     ...t.planned.map(e => taskRow(e, 'plan', 'Coming')),
@@ -2436,8 +2693,10 @@ function renderCalendarHTML(){
       ${calExpanded ? '' : `<span class="cal-dow">${dow}</span>`}
       <span class="cal-hijri">${hijriPart(d, 'day', { day: 'numeric' })}</span>
       <span class="cal-num">${d.getDate()}</span>
-      <span class="cal-pct">${pct != null ? pct + '%' : ''}</span>
-      ${calEventDotsHTML(k)}
+      ${(calExpanded && trackedSkill())
+        ? (() => { const st = trackStatus(k); return st ? `<i class="ct-dot ${st}" style="--tk:${trackColor()}" title="${st === 'done' ? 'Done' : st === 'part' ? 'Partly done' : 'Missed'}"></i>` : '<span class="cal-pct"></span>'; })()
+        : `<span class="cal-pct">${pct != null ? pct + '%' : ''}</span>`}
+      ${calMarksHTML(k)}
     </div>`;
   }).join('');
   const offset = calExpanded ? calMonthOffset : calWeekOffset;
@@ -2451,14 +2710,73 @@ function renderCalendarHTML(){
         <button id="calNext" aria-label="Next ${unit}">&rarr;</button>
       </div>
     </div>
+    ${calExpanded ? calTrackBarHTML(days) : ''}
     ${dowHead}
     <div class="cal-week">${cells}</div>
-    <button class="cal-toggle" id="calToggle" aria-expanded="${calExpanded}">
-      <span>${calExpanded ? 'Show week' : 'Show full month'}</span><span>${calExpanded ? '&uarr;' : '&darr;'}</span>
+    <button class="cal-toggle" id="calToggle" aria-expanded="${calExpanded}" aria-label="${calExpanded ? 'Show week' : 'Show full month'}" title="${calExpanded ? 'Show week' : 'Show full month'}">
+      <span></span><span>${calExpanded ? '&uarr;' : '&darr;'}</span>
     </button>
   </div>`;
 }
+// ----- month view: track one skill item on the calendar -----
+let calTrack = (() => { try { return JSON.parse(localStorage.getItem('cal-track') || 'null'); } catch(_) { return null; } })();
+function saveCalTrack(){ try { localStorage.setItem('cal-track', JSON.stringify(calTrack)); } catch(_){} }
+function trackedSkill(){ return calTrack ? STEPS.find(x => x.id === calTrack.sid) : null; }
+function trackStartKey(){
+  const keys = Object.keys(history).concat(Object.keys(linkHistory)).sort();
+  return keys[0] || todayKey();
+}
+// 'done' | 'part' | 'miss' | null  (null = not due / nothing to show)
+function trackStatus(k){
+  const s = trackedSkill();
+  if (!s) return null;
+  const todayK = todayKey();
+  if (k > todayK || k < trackStartKey()) return null;
+  if (!isWindowScheduledOnDate(s, k)) return null;
+  const idx = calTrack.idx;
+  let st;
+  if (idx === 'all' || !(s.links || []).length){
+    const r = windowDayRatio(s, k);
+    st = r >= 1 ? 'done' : (r > 0 ? 'part' : 'miss');
+  } else {
+    const l = (s.links || [])[idx];
+    if (!l || !isLinkScheduledOnDate(l, k)) return null;
+    const rec = linkHistory[k] && linkHistory[k][s.id];
+    if (rec && Object.prototype.hasOwnProperty.call(rec, idx)) st = rec[idx] ? 'done' : 'miss';
+    else st = (history[k] && history[k][s.id]) ? 'done' : 'miss';
+  }
+  if (k === todayK && st !== 'done') return null; // today isn't over yet
+  return st;
+}
+function trackColor(){
+  const s = trackedSkill();
+  if (!s) return '#3A6FD0';
+  if (s.color) return s.color;
+  const auto = ['#C8A57F', '#2E8B7F', '#7357D6', '#3A6FD0', '#D9473A'];
+  const i = Math.max(0, STEPS.filter(x => isWindowScheduledOnDate(x, todayKey())).findIndex(x => x.id === s.id));
+  return auto[i % 5];
+}
+function calTrackBarHTML(days){
+  const s = trackedSkill();
+  const opts = STEPS.map(x => `<option value="${x.id}" ${s && s.id === x.id ? 'selected' : ''}>${escHTML(stripLeadingIcons(x.title) || x.title)}</option>`).join('');
+  const itemOpts = s ? [`<option value="all" ${calTrack.idx === 'all' ? 'selected' : ''}>Whole skill</option>`]
+    .concat((s.links || []).map((l, i) => `<option value="${i}" ${String(calTrack.idx) === String(i) ? 'selected' : ''}>${escHTML(l.label || 'Item ' + (i + 1))}</option>`)).join('') : '';
+  let summary = '';
+  if (s){
+    const st = days.map(d => trackStatus(localDateKey(d))).filter(Boolean);
+    const done = st.filter(x => x === 'done').length;
+    summary = st.length ? `<div class="cal-track-sum"><i class="ct-dot done" style="--tk:${trackColor()}"></i>Done ${done} of ${st.length} day${st.length === 1 ? '' : 's'}<i class="ct-dot miss" style="--tk:${trackColor()}"></i>Missed</div>` : '<div class="cal-track-sum">No history for this yet — it starts filling in from today.</div>';
+  }
+  return `<div class="cal-track">
+    <span class="cal-track-label">Track</span>
+    <select id="calTrackSkill" aria-label="Skill to track"><option value="">None</option>${opts}</select>
+    ${s ? `<select id="calTrackItem" aria-label="Item to track">${itemOpts}</select>` : ''}
+  </div>${summary}`;
+}
 function wireCalendar(){
+  const ts = card.querySelector('#calTrackSkill'), ti = card.querySelector('#calTrackItem');
+  if (ts) ts.addEventListener('change', () => { calTrack = ts.value ? { sid: ts.value, idx: 'all' } : null; saveCalTrack(); renderGrid(); });
+  if (ti) ti.addEventListener('change', () => { calTrack.idx = ti.value === 'all' ? 'all' : parseInt(ti.value, 10); saveCalTrack(); renderGrid(); });
   const go = delta => {
     if (calExpanded) calMonthOffset = delta === 0 ? 0 : calMonthOffset + delta;
     else calWeekOffset = delta === 0 ? 0 : calWeekOffset + delta;
@@ -2493,7 +2811,7 @@ function todoTileHTML(list, pinned){
         <div class="win-card todo-tile" data-todo-id="${list.id}" ${pinned ? 'data-pinned="1"' : ''} data-span="${span}" style="grid-column: span ${span}; background: ${c};">
           ${pendingCount ? `<div class="todo-count-badge" style="background:${c};">${pendingCount}</div>` : ''}
           <div class="win-icon">${todoIconWithColor(c)}</div>
-          <div class="win-title">${list.title}</div>
+          <div class="win-title">${escHTML(list.title)}</div>
           <button class="win-resize-handle" aria-label="Drag to resize">${RESIZE_ICON}</button>
         </div>`;
 }
@@ -2507,8 +2825,20 @@ let todayMenuId = null;
 let todayListEditing = null;
 let todayListColorDraft = null;
 let justDraggedToday = false;
-let comingOpen = false;
-try { comingOpen = localStorage.getItem('comingOpen') === '1'; } catch(e){}
+// Foldable sections: remembered per section on this device.
+function foldOpen(key, dflt){
+  try { const v = localStorage.getItem('fold-' + key); if (v === '1') return true; if (v === '0') return false; } catch(e){}
+  return dflt;
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest && e.target.closest('.fold-toggle[data-fold]');
+  if (!btn) return;
+  const open = btn.getAttribute('aria-expanded') !== 'true';
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  const body = document.getElementById(btn.getAttribute('aria-controls'));
+  if (body) body.hidden = !open;
+  try { localStorage.setItem('fold-' + btn.dataset.fold, open ? '1' : '0'); } catch(e){}
+});
 function isComing(t){ return !!t.dueDate && t.dueDate > todayKey(); }
 function addDaysKey(n){ const d = new Date(); d.setDate(d.getDate() + n); return localDateKey(d); }
 function fmtDueLabel(k){
@@ -2553,12 +2883,12 @@ function beginTodayDrag(e, rowEl, panel, listId){
   function onMove(ev){
     ghost.style.left = (ev.clientX - offX) + 'px';
     ghost.style.top = (ev.clientY - offY) + 'px';
-    // pick column by horizontal position
-    let target = lists[0];
+    // pick the list nearest the finger (Must do / Maybe today are stacked)
+    let target = lists[0], best = Infinity;
     for (const ul of lists){
-      const cr = ul.closest('.tp-col').getBoundingClientRect();
-      if (ev.clientX >= cr.left && ev.clientX <= cr.right){ target = ul; break; }
-      if (ev.clientX > cr.right) target = ul;
+      const b = ul.getBoundingClientRect();
+      const dy = ev.clientY < b.top ? b.top - ev.clientY : ev.clientY > b.bottom ? ev.clientY - b.bottom : 0;
+      if (dy < best){ best = dy; target = ul; }
     }
     const siblings = Array.from(target.querySelectorAll('.tp-row')).filter(x => x !== rowEl);
     const before = siblings.find(x => { const b = x.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; });
@@ -2580,7 +2910,7 @@ function beginTodayDrag(e, rowEl, panel, listId){
       const slot = ul.dataset.slot;
       ul.querySelectorAll('.tp-row').forEach(li => {
         const t = todos.find(x => x.id === li.dataset.id);
-        if (t){ t.slot = slot; t.order = n++; }
+        if (t){ t.slot = 'morning'; if (slot === 'maybe') t.maybe = true; else delete t.maybe; t.order = n++; }
       });
     });
     todos.filter(t => t.listId === listId && !lists.some(ul => ul.querySelector(`[data-id="${t.id}"]`)))
@@ -2594,10 +2924,9 @@ function beginTodayDrag(e, rowEl, panel, listId){
 }
 function renderPastDayPanel(k){
   const entries = tasksForDay(k).done;
-  const col = (slot, label) => {
-    const rows = entries.filter(e => (slot === 'evening') === (e.slot === 'evening'));
-    return `<div class="tp-col tp-col-${slot}">
-      <div class="tp-col-head"><span>${label}</span><span>${rows.length}</span></div>
+  const col = () => {
+    const rows = entries;
+    return `<div class="tp-col">
       ${rows.length ? `<ul class="tp-list">${rows.map(e => `<li class="tp-row done" style="--tc:transparent">
         <span class="tp-check tp-check-static">${CHECK_SVG_SM}</span>
         <span class="tp-text tp-text-static" dir="auto">${escHTML(e.text)}</span></li>`).join('')}</ul>` : '<p class="tp-empty">Nothing recorded.</p>'}
@@ -2608,7 +2937,7 @@ function renderPastDayPanel(k){
       <div><h2 class="tp-title">${escHTML(dayHeading(k))}</h2></div>
       <div class="tp-count"><span>${entries.length}</span>done</div>
     </div>
-    <div class="tp-cols">${col('morning','Morning')}${col('evening','Evening')}</div>
+    <div class="tp-cols tp-cols-single">${col()}</div>
     <button class="tp-back"><span>&larr; Back to today</span><span></span></button>
   </section>`;
 }
@@ -2617,7 +2946,8 @@ function renderTodayPanel(list, viewKey){
   if (!list) return future ? `<section class="today-panel tp-dated"><div class="tp-head"><h2 class="tp-title">${escHTML(dayHeading(viewKey))}</h2></div><p class="tp-empty">Create a list with “Today” in its name to plan tasks.</p><button class="tp-back"><span>&larr; Back to today</span><span></span></button></section>` : '';
   const items = todos.filter(t => t.listId === list.id).sort((a,b)=> (a.order ?? 0) - (b.order ?? 0));
   const coming = future ? [] : items.filter(t => !t.done && isComing(t)).sort((a,b)=> a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0);
-  const pending = future ? items.filter(t => !t.done && t.dueDate === viewKey) : items.filter(t => !t.done && !isComing(t));
+  const pending = future ? items.filter(t => !t.done && t.dueDate === viewKey) : items.filter(t => !t.done && !t.later && !isComing(t));
+  const later = future ? [] : items.filter(t => !t.done && t.later);
   const done = future ? [] : items.filter(t => t.done);
   const otherLists = todoLists.filter(l => !isPinnedTodayList(l));
   const dateLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -2632,45 +2962,80 @@ function renderTodayPanel(list, viewKey){
         ? `<button class="tp-del" data-id="${t.id}" aria-label="Delete task">&times;</button>`
         : `<button class="tp-more ${todayMenuId === t.id ? 'open' : ''}" data-id="${t.id}" aria-label="More options" aria-expanded="${todayMenuId === t.id}">&middot;&middot;&middot;</button>`}
       ${(!t.done && todayMenuId === t.id) ? `<div class="tp-menu" data-id="${t.id}">
-        ${t.dueDate ? '<button class="tp-menu-btn" data-act="today">Move to today</button>' : ''}
-        <div class="tp-menu-label">${t.dueDate ? 'Change date' : 'Move to coming'}</div>
         <button class="tp-menu-btn" data-act="due" data-days="1">Tomorrow</button>
-        <button class="tp-menu-btn" data-act="due" data-days="${(8 - new Date().getDay()) % 7 || 7}">Next Monday</button>
         <label class="tp-menu-date">Pick a date<input type="date" class="tp-date" data-id="${t.id}" min="${addDaysKey(1)}"></label>
-        ${otherLists.length ? `<div class="tp-menu-label">Send back to list</div>
-          ${otherLists.map(l => `<button class="tp-menu-btn" data-act="list" data-list="${l.id}" dir="auto">${escHTML(l.title)}</button>`).join('')}` : ''}
-        <div class="tp-menu-label">Colour</div>
-        <div class="tp-swatches">${TODO_COLORS.map(c => `<button class="tp-swatch tp-task-swatch ${c.hex === t.color ? 'selected' : ''}" data-color="${c.hex}" style="background:${c.hex}" aria-label="${c.key}"></button>`).join('')}</div>
-        <button class="tp-menu-btn danger" data-act="delete">Delete task</button>
+        ${t.later ? '' : '<button class="tp-menu-btn" data-act="later">To-do soon</button>'}
+        <button class="tp-menu-btn danger" data-act="delete">Delete</button>
       </div>` : ''}
     </li>`;
   };
-  const comingRow = t => `<li class="tp-row tp-coming-row" data-id="${t.id}" style="--tc:${t.color || 'transparent'}">
-      <span class="tp-due">${fmtDueLabel(t.dueDate)}</span>
+  const comingRow = t => `<li class="tp-row tp-coming-row" data-id="${t.id}">
       <span class="tp-text tp-text-static" dir="auto">${escHTML(t.text)}</span>
-      <span class="tp-slot-tag">${isEvening(t) ? 'PM' : 'AM'}</span>
-      <button class="tp-bring" data-id="${t.id}" aria-label="Bring back to today">Today</button>
-      <button class="tp-del" data-id="${t.id}" aria-label="Delete task">&times;</button>
+      <span class="tp-acts">
+        <button class="tp-bring tp-letter" data-id="${t.id}" aria-label="Bring back to today" title="Move to today">T</button>
+        ${planButtonHTML(t.id, 'tp-bring')}
+        <button class="tp-del" data-id="${t.id}" aria-label="Delete task">&times;</button>
+      </span>
     </li>`;
-  const col = (slot, label) => {
-    const list_ = pending.filter(t => (slot === 'evening') === isEvening(t));
-    return `<div class="tp-col tp-col-${slot}" data-slot="${slot}">
-      <div class="tp-col-head"><span>${label}</span><span>${list_.length}</span></div>
-      <ul class="tp-list tp-drop" data-slot="${slot}">${list_.map(row).join('')}</ul>
-      ${list_.length ? '' : '<p class="tp-empty">Nothing here.</p>'}
+  const laterRow = t => {
+    const editing = todayEditingId === t.id;
+    return `<li class="tp-row tp-later-row" data-id="${t.id}">
+      <button class="tp-check" data-id="${t.id}" aria-label="Mark done"></button>
+      ${editing
+        ? `<input class="tp-edit" data-id="${t.id}" dir="auto" value="${escHTML(t.text)}" aria-label="Edit task">`
+        : `<span class="tp-text" data-id="${t.id}" dir="auto" title="Tap to edit">${escHTML(t.text)}</span>`}
+      <span class="tp-acts">
+        <button class="tp-bring tp-bring-later tp-letter" data-id="${t.id}" aria-label="Move to today" title="Move to today">T</button>
+        ${planButtonHTML(t.id, 'tp-bring')}
+        <button class="tp-del" data-id="${t.id}" aria-label="Delete task">&times;</button>
+      </span>
+    </li>`;
+  };
+  const laterSection = () => {
+    const o = foldOpen('soon-' + list.id, true);
+    const head = (title, n, id) => `<button type="button" class="tp-pair-toggle" data-pair="${list.id}" aria-controls="${id}" aria-expanded="${o}"><span class="tp-later-title" role="heading" aria-level="2">${title}</span><span class="ev-count">${n || ''}<span class="fold-arrow">&darr;</span></span></button>`;
+    return `<div class="tp-pair" data-pair="${list.id}">
+      <div class="tp-later tp-pair-col">
+        ${head('To-do Soon', later.length, 'tpLater-' + list.id)}
+        <div class="tp-pair-body" id="tpLater-${list.id}" ${o ? '' : 'hidden'}>
+          ${later.length ? `<ul class="tp-list tp-list-later">${later.map(laterRow).join('')}</ul>` : '<p class="tp-empty">No undated tasks yet.</p>'}
+          <form class="tp-add" data-slot="morning" data-later="1" autocomplete="off">
+            <input class="tp-add-input" id="todayAdd-${list.id}-later" dir="auto" placeholder="Add a task…" enterkeyhint="done">
+            <button type="submit" class="tp-add-btn" aria-label="Add task for later">+</button>
+          </form>
+        </div>
+      </div>
+      <div class="tp-coming tp-pair-col">
+        ${(() => { const tmr = coming.filter(t => t.dueDate === addDaysKey(1)); return `${head('Coming Tomorrow', tmr.length, 'tpComing-' + list.id)}
+        <div class="tp-pair-body" id="tpComing-${list.id}" ${o ? '' : 'hidden'}>
+          ${tmr.length ? `<ul class="tp-list tp-list-coming">${tmr.map(comingRow).join('')}</ul>` : '<p class="tp-empty">Nothing planned for tomorrow.</p>'}`; })()}
+        </div>
+      </div>
+    </div>`;
+  };
+  const col = (slot) => {
+    const must = pending.filter(t => !t.maybe), maybe = pending.filter(t => t.maybe);
+    return `<div class="tp-col" data-slot="${slot}">
+      <ul class="tp-list tp-drop tp-drop-must" data-slot="must">${must.map(row).join('')}</ul>
+      <div class="tp-split" role="separator" aria-label="Below: maybe today"></div>
+      <ul class="tp-list tp-drop tp-drop-maybe" data-slot="maybe">${maybe.map(row).join('')}</ul>
+      ${pending.length ? '' : '<p class="tp-empty">Nothing here.</p>'}
       <form class="tp-add" data-slot="${slot}" ${future ? `data-due="${viewKey}"` : ''} autocomplete="off">
-        <input class="tp-add-input" id="todayAdd-${list.id}-${slot}" dir="auto" placeholder="${future ? 'Plan' : 'Add'} ${slot} task…" enterkeyhint="done">
-        <button type="submit" class="tp-add-btn" aria-label="Add ${slot} task">+</button>
+        <input class="tp-add-input" id="todayAdd-${list.id}-${slot}" dir="auto" placeholder="${future ? 'Plan a' : 'Add a'} task…" enterkeyhint="done">
+        <button type="submit" class="tp-add-btn" aria-label="Add task">+</button>
       </form>
     </div>`;
   };
   const editingList = !future && todayListEditing === list.id;
   const listColor = todayListColorDraft || listColorOf(list);
   return `<section class="today-panel ${future ? 'tp-dated' : ''}" data-list-id="${list.id}">
+    <div class="tp-focus">
     <div class="tp-head">
+      <div class="tp-head-wrap">
       <div class="tp-head-main">
         <h2 class="tp-title" dir="auto">${future ? escHTML(dayHeading(viewKey)) : escHTML(stripLeadingIcons(list.title))}</h2>
         ${future ? '' : `<button class="tp-edit-list ${editingList ? 'open' : ''}" aria-label="Edit list name and colour" title="Edit list name and colour">&#9998;</button>`}
+      </div>
       </div>
       <div class="tp-count"><span>${pending.length}</span>${future ? 'planned' : (pending.length === 1 ? 'task left' : 'tasks left')}</div>
     </div>
@@ -2678,22 +3043,18 @@ function renderTodayPanel(list, viewKey){
       <label class="tp-menu-label" for="tpListTitle">List name</label>
       <input class="edit-input tp-list-title-input" id="tpListTitle" dir="auto" value="${escHTML(list.title)}">
       <p class="tp-hint">Keep the word “Today” in the name so the list stays here.</p>
-      <div class="tp-menu-label">List colour</div>
-      <div class="tp-swatches">${LIST_COLORS.map(c => `<button class="tp-swatch tp-list-swatch ${c.hex === listColor ? 'selected' : ''}" data-color="${c.hex}" style="background:${c.hex}" aria-label="${c.key}"></button>`).join('')}</div>
       <div class="tp-editor-actions">
         <button class="tp-menu-btn tp-save-list">Save</button>
         <button class="tp-menu-btn tp-cancel-list">Cancel</button>
       </div>
     </div>` : ''}
-    <div class="tp-cols">
-      ${col('morning', 'Morning')}
-      ${col('evening', 'Evening')}
+    <div class="tp-cols tp-cols-single ${done.length ? 'tp-has-done' : ''}">
+      ${col('morning')}
+      ${done.length ? (() => { const o = foldOpen('done-' + list.id, true); const bid = 'tpDone-' + list.id; return `<div class="tp-col tp-col-done"><button type="button" class="tp-done-toggle fold-toggle" data-fold="done-${list.id}" aria-controls="${bid}" aria-expanded="${o}"><span>Done · ${done.length}</span><span class="fold-arrow">&darr;</span></button><ul class="tp-list tp-list-done fold-body" id="${bid}" ${o ? '' : 'hidden'}>${done.map(row).join('')}</ul></div>`; })() : ''}
     </div>
-    ${coming.length ? `<button class="tp-coming-toggle" aria-expanded="${comingOpen}"><span>Coming · ${coming.length}</span><span>${comingOpen ? '&uarr;' : '&darr;'}</span></button>
-      ${comingOpen ? `<ul class="tp-list tp-list-coming">${coming.map(comingRow).join('')}</ul>` : ''}` : ''}
-    ${done.length ? `<div class="tp-done-label">Done · ${done.length}</div><ul class="tp-list tp-list-done">${done.map(row).join('')}</ul>` : ''}
+    </div>
+    ${future ? '' : laterSection()}
     ${future ? '<button class="tp-back"><span>&larr; Back to today</span><span></span></button>' : ''}
-    ${(!future && pending.length > 1) ? '<p class="tp-tip">Press and hold a task to drag it.</p>' : ''}
   </section>`;
 }
 function wireTodayPanels(){
@@ -2715,12 +3076,13 @@ function wireTodayPanels(){
       if (!text) return;
       const id = 'todo-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
       const maxOrder = todos.filter(t => t.listId === listId).reduce((m,t)=> Math.max(m, t.order ?? 0), -1);
-      const nt = { id, listId, text, color: listColorOf(list), done: false, order: maxOrder + 1, slot };
+      const nt = { id, listId, text, color: '', done: false, order: maxOrder + 1, slot };
       if (form.dataset.due) nt.dueDate = form.dataset.due;
+      if (form.dataset.later) nt.later = true;
       todos.push(nt);
       await saveTodos();
       renderGrid();
-      const again = document.getElementById('todayAdd-' + listId + '-' + slot);
+      const again = document.getElementById('todayAdd-' + listId + '-' + (form.dataset.later ? 'later' : slot));
       if (again) again.focus({ preventScroll: true });
     }));
     panel.querySelectorAll('.tp-check').forEach(btn => btn.addEventListener('click', async () => {
@@ -2774,6 +3136,7 @@ function wireTodayPanels(){
         todayMenuId = null;
         if (act === 'due'){ t.dueDate = addDaysKey(Number(b.dataset.days)); }
         else if (act === 'today'){ delete t.dueDate; }
+        else if (act === 'later'){ delete t.dueDate; delete t.maybe; t.later = true; }
         else if (act === 'list'){
           const maxOrder = todos.filter(x => x.listId === b.dataset.list).reduce((m,x)=> Math.max(m, x.order ?? 0), -1);
           t.listId = b.dataset.list; t.order = maxOrder + 1; delete t.dueDate; delete t.slot;
@@ -2789,15 +3152,21 @@ function wireTodayPanels(){
         await save();
       });
     }
-    const ct = panel.querySelector('.tp-coming-toggle');
-    if (ct) ct.addEventListener('click', () => {
-      comingOpen = !comingOpen;
-      try { localStorage.setItem('comingOpen', comingOpen ? '1' : '0'); } catch(e){}
-      renderGrid();
+    panel.querySelectorAll('.tp-pair-toggle').forEach(btn => btn.addEventListener('click', () => {
+      const pair = panel.querySelector('.tp-pair');
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      pair.querySelectorAll('.tp-pair-toggle').forEach(b => b.setAttribute('aria-expanded', open ? 'true' : 'false'));
+      pair.querySelectorAll('.tp-pair-body').forEach(b => { b.hidden = !open; });
+      try { localStorage.setItem('fold-soon-' + btn.dataset.pair, open ? '1' : '0'); } catch(_){}
+    }));
+    makeSortable(panel.querySelector('.tp-list-later'), '.tp-row', 'data-id', async (ids) => {
+      ids.forEach((id, i) => { const t = todos.find(x => x.id === id); if (t) t.order = 1000 + i; });
+      await saveTodos();
+      render();
     });
     panel.querySelectorAll('.tp-bring').forEach(btn => btn.addEventListener('click', async () => {
       const t = todos.find(x => x.id === btn.dataset.id);
-      if (t){ delete t.dueDate; await save(); }
+      if (t){ delete t.dueDate; delete t.later; await save(); }
     }));
     const el = panel.querySelector('.tp-edit-list');
     if (el) el.addEventListener('click', () => {
@@ -2838,6 +3207,7 @@ function wireTodayPanels(){
 }
 function renderGrid(){
   ensureToday();
+  card.classList.add('is-home');
   const dueSteps = STEPS.filter(isDueToday);
   const doneCount = dueSteps.filter(s => stepProgress(s).isFull).length;
   const pinnedLists = todoLists.filter(isPinnedTodayList);
@@ -2846,17 +3216,23 @@ function renderGrid(){
   const viewingDate = calSelectedKey;
   card.innerHTML = `
     <div class="grid-header">
-      <h1>Good morning.</h1>
-      <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No windows yet — add the first one below.")}</p>
+      <h1>${(() => { const h = new Date().getHours(); return h < 5 ? 'Good evening.' : h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.'; })()}</h1>
+      <p class="sub">${dueSteps.length ? `${doneCount} of ${dueSteps.length} done today` : (STEPS.length ? "Nothing scheduled for today." : "No skills yet — tap + to add one.")}</p>
     </div>
+    <div class="home-left">
     ${renderCalendarHTML()}
     ${renderEventsBlock(viewingDate || todayKey())}
+    </div>
+    <div class="home-right">
     ${viewingDate
       ? (viewingDate < todayKey() ? renderPastDayPanel(viewingDate) : renderTodayPanel(pinnedLists[0] || null, viewingDate))
       : pinnedLists.map(l => renderTodayPanel(l)).join('')}
-    <div class="win-grid" id="winGrid" ${viewingDate ? 'style="display:none"' : ''}>
-      ${dueSteps.length ? '<div class="grid-divider"><span>Daily Skills</span></div>' : ''}
-      ${dueSteps.map((s, si) => {
+    </div>
+    <div class="win-grid ${foldOpen('sec-skills', true) ? '' : 'fold-skills'} ${foldOpen('sec-lists', true) ? '' : 'fold-lists'}" id="winGrid" ${viewingDate ? 'style="display:none"' : ''}>
+      <div class="grid-divider gd-fold" data-sec="skills" role="button" tabindex="0" aria-expanded="${foldOpen('sec-skills', true)}"><span>Daily Skills</span><span class="gd-actions"><button type="button" class="gd-add" id="gdAddSkill" aria-label="Add a skill" title="Add a skill">+</button><span class="gd-arrow fold-arrow">&darr;</span></span></div>
+      ${dueSteps.map((s, si) => ({ s, si, full: stepProgress(s).isFull }))
+        .sort((a, b) => (a.full - b.full) || (a.si - b.si))   // completed skills sink to the bottom
+        .map(({ s, si }) => {
         const prog = stepProgress(s);
         const pct = Math.round(prog.ratio * 100);
         const badge = prog.isFull
@@ -2864,15 +3240,15 @@ function renderGrid(){
           : (prog.hasLinks && prog.checked > 0 ? `<span class="win-check-frac">${prog.checked}/${prog.total}</span>` : '');
         const span = Math.max(1, s.widgetSpan || 1);
         return `
-        <div class="win-card tone-${si % 5} ${prog.isFull ? 'win-done' : ''}" data-id="${s.id}" data-span="${span}" style="grid-column: span ${span};">
-          <div class="win-fill" style="height:${pct}%"></div>
+        <div class="win-card tone-${si % 5} ${prog.isFull ? 'win-done' : ''} " data-pct="${pct}%" ${pct >= 18 ? 'data-low' : ''} ${pct >= 60 ? 'data-high' : ''} style="--p:${tileShownPct[s.id] ?? pct}; ${s.color ? `--tc:${s.color};` : ''} grid-column: span ${Math.max(1, s.widgetSpan || 1)};" data-p="${pct}" data-id="${s.id}" data-no="${String(si + 1).padStart(2, '0')}" data-span="${span}">
+          <div class="win-prog" aria-hidden="true"></div>
           <button class="win-check ${prog.isFull ? 'checked' : ''}" data-id="${s.id}" aria-label="${prog.isFull ? 'Mark incomplete' : 'Mark complete'}">${badge}</button>
           <div class="win-icon">${iconFor(s)}</div>
-          <div class="win-title">${s.title}</div>
+          <div class="win-title">${escHTML(s.title)}</div>
           <button class="win-resize-handle" aria-label="Drag to resize">${RESIZE_ICON}</button>
         </div>`;
       }).join('')}
-      ${(dueSteps.length && otherLists.length) ? '<div class="grid-divider"><span>Tasks / Ideas</span></div>' : ''}
+      <div class="grid-divider gd-fold" data-sec="lists" role="button" tabindex="0" aria-expanded="${foldOpen('sec-lists', true)}"><span>Tasks / Ideas</span><span class="gd-actions"><button type="button" class="gd-add" id="gdAddList" aria-label="Add a to-do list" title="Add a to-do list">+</button><span class="gd-arrow fold-arrow">&darr;</span></span></div>
       ${otherLists.map(list => todoTileHTML(list, false)).join('')}
     </div>
   `;
@@ -2891,12 +3267,30 @@ function renderGrid(){
       view = 'todo'; activeTodoListId = el.dataset.todoId; render();
     });
   });
+  card.querySelectorAll('.gd-fold').forEach(h => {
+    const toggle = (e) => {
+      if (e.target.closest('.gd-add')) return;
+      const grid = document.getElementById('winGrid');
+      const cls = 'fold-' + h.dataset.sec;
+      const open = grid.classList.contains(cls);   // currently folded -> open it
+      grid.classList.toggle(cls, !open);
+      h.setAttribute('aria-expanded', open ? 'true' : 'false');
+      try { localStorage.setItem('fold-sec-' + h.dataset.sec, open ? '1' : '0'); } catch(_){}
+    };
+    h.addEventListener('click', toggle);
+    h.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(e); } });
+  });
+  const gs = document.getElementById('gdAddSkill');
+  if (gs) gs.addEventListener('click', ()=>{ addDraft = null; view = 'add'; render(); });
+  const gl = document.getElementById('gdAddList');
+  if (gl) gl.addEventListener('click', ()=>{ view = 'addTodoList'; render(); });
   wireCalendar();
   wireTodayPanels();
   const bt = card.querySelector('.tp-back');
   if (bt) bt.addEventListener('click', () => { calSelectedKey = null; renderGrid(); });
   renderOuterActions();
   setupGridReorder();
+  animateTileRings();
   setupTileResize();
 }
 
@@ -3101,7 +3495,7 @@ async function finishGridDrag(grid, kindSelector){
 // ---------- manage / reorder ----------
 function renderManageScreen(){
   card.innerHTML = `
-    <h1 style="font-size:26px;">Reorder windows</h1>
+    <h1 style="font-size:26px;">Reorder skills</h1>
     <p class="sub">Drag the handle to reorder, remove one, or tap a title to open and edit it — even skills not scheduled for today.</p>
     ${todoLists.length ? '<div class="grid-divider" style="margin:4px 0 10px;"><span>Daily Skills</span></div>' : ''}
     <div class="manage-list" id="manageList">
@@ -3113,7 +3507,7 @@ function renderManageScreen(){
             <button class="manage-remove" data-id="${s.id}" aria-label="Remove ${s.title}">✕</button>
           </div>
         </div>
-      `).join('') || '<p class="skill-note-empty">No windows yet.</p>'}
+      `).join('') || '<p class="skill-note-empty">No skills yet.</p>'}
     </div>
     ${todoLists.length ? `
     <div class="grid-divider" style="margin:18px 0 10px;"><span>Tasks / Ideas</span></div>
@@ -3328,7 +3722,7 @@ function renderManageNav(){
   const nav = document.createElement('div');
   nav.className = 'nav';
   nav.innerHTML = `
-    <button class="back-main" disabled>← Back</button>
+    <button class="back-main nav-overview">← Overview</button>
     <button id="doneManageBtn" class="next-main">Done →</button>
   `;
   card.appendChild(nav);
@@ -3346,14 +3740,15 @@ function captureAddDraftFromInputs(){
   const links = [];
   rows.forEach((row, i)=>{
     const label = row.querySelector('[data-k="label"]').value;
-    const url = row.querySelector('[data-k="url"]').value;
-    const existingDays = (addDraft.links[i] && addDraft.links[i].days) || [0,1,2,3,4,5,6];
-    links.push({ label, url, days: existingDays });
+    const urlEl = row.querySelector('[data-k="url"]');
+    const url = urlEl ? urlEl.value : '';
+    const prev = addDraft.links[i] || {};
+    links.push({ label, url, days: prev.days || [0,1,2,3,4,5,6], withLink: !!urlEl });
   });
   addDraft.links = links;
 }
 function renderAddForm(){
-  if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:'', days:[0,1,2,3,4,5,6]}], days:[1,2,3,4,5,6] };
+  if (!addDraft) addDraft = { title:'', sub:'', links:[{label:'', url:'', days:[0,1,2,3,4,5,6], withLink:false}], days:[1,2,3,4,5,6] };
   card.innerHTML = `
     <h1 style="font-size:26px;">Add a skill</h1>
     <div class="edit-fields">
@@ -3365,24 +3760,29 @@ function renderAddForm(){
         <label>Short description (optional)</label>
         <input type="text" class="edit-input" dir="auto" id="newSubInput" placeholder="e.g. Check messages and notifications" value="${addDraft.sub.replace(/"/g,'&quot;')}">
       </div>
+      ${skillColorRowHTML(addDraft.color)}
       ${renderScheduleHTML('new', addDraft.days)}
     </div>
     <div class="edit-field" style="margin-bottom:10px;">
-      <label>Links (optional — add as many as you like)</label>
+      <label>Items — add a link to open it, or leave it empty for a task</label>
     </div>
     <div id="linkRowsWrap">${renderLinkRowsHTML(addDraft.links)}</div>
-    <button class="edit-link-btn" id="addLinkRowBtn" style="margin-bottom:16px;">+ Add another link</button>
+    ${addButtonsHTML()}
     <div class="actions">
-      <button class="btn btn-primary" id="confirmAddBtn">Add window</button>
+      <button class="btn btn-primary" id="confirmAddBtn">Add skill</button>
       <button class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
     </div>
     <div class="save-msg" id="addErrMsg"></div>
+    <div class="nav"><button class="back-main nav-overview">← Overview</button><span></span></div>
   `;
-  document.getElementById('addLinkRowBtn').addEventListener('click', ()=>{
+  const addNewItem = withLink => {
     captureAddDraftFromInputs();
-    addDraft.links.push({ label:'', url:'', days:[0,1,2,3,4,5,6] });
+    addDraft.links.push({ label:'', url:'', days:[0,1,2,3,4,5,6], withLink });
     render();
-  });
+  };
+  document.getElementById('addItemPlainBtn').addEventListener('click', ()=> addNewItem(false));
+  wireLinkKindButtons(()=> addDraft, captureAddDraftFromInputs);
+  wireSkillColorRow(addDraft);
   card.querySelectorAll('.link-remove-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       captureAddDraftFromInputs();
@@ -3404,13 +3804,13 @@ function renderAddForm(){
     const finalLinks = addDraft.links
       .filter(l => (l.url||'').trim() || (l.label||'').trim())
       .map((l,i) => ({
-        label: (l.label||'').trim() || 'Open App',
+        label: (l.label||'').trim() || ((l.url||'').trim() ? 'Open App' : 'Task'),
         url: (l.url||'').trim(),
         primary: i===0,
         schedule: computeScheduleFromDays(l.days || [0,1,2,3,4,5,6])
       }));
     const schedule = computeScheduleFromDays(addDraft.days);
-    const newStep = { id: slugify(title), iconKey: 'custom', title, sub: addDraft.sub.trim(), links: finalLinks, schedule };
+    const newStep = { id: slugify(title), iconKey: 'custom', title, sub: addDraft.sub.trim(), links: finalLinks, schedule, color: addDraft.color || '' };
     STEPS.push(newStep);
     await saveSteps();
     addDraft = null;
@@ -3529,164 +3929,97 @@ function trailHTML(trail){
 
 const TASK_ACCENTS = ['var(--dawn)', 'var(--sage)', 'var(--gold)', 'var(--violet)', 'var(--sunflower)'];
 
-function renderProgress(){
-  const days = progressPeriod === 'week' ? 7 : progressPeriod === 'month' ? 30 : 365;
-  const stats = computeStats(days);
-  card.innerHTML = `
-    ${ICONS.chart}
-    <h1 style="font-size:26px;">Progress</h1>
-    <p class="sub">How consistently you're hitting each window, and each task inside it.</p>
-    <div class="period-tabs">
-      <button class="period-tab ${progressPeriod==='week'?'active':''}" data-p="week">Week</button>
-      <button class="period-tab ${progressPeriod==='month'?'active':''}" data-p="month">Month</button>
-      <button class="period-tab ${progressPeriod==='year'?'active':''}" data-p="year">Year</button>
-    </div>
-    <div class="progress-list">
-      ${stats.map((st, si) => {
-        const pct = st.total ? Math.round((st.count/st.total)*100) : 0;
-        const gradId = `progRing-${si}`;
-        return `
-        <div class="progress-card">
-          <div class="progress-card-top">
-            <div class="progress-card-heading">
-              <span class="progress-card-icon">${(ICONS[st.iconKey] || ICONS.custom)}</span>
-              <div>
-                <div class="progress-card-title">${st.title}</div>
-                <div class="progress-card-count">${st.count} of ${st.total} scheduled days</div>
-              </div>
-            </div>
-            ${ringSVG(pct, gradId)}
-          </div>
-          ${trailHTML(st.trail)}
-          ${st.links.length ? `<div class="progress-sublist">
-            ${st.links.map((l, li) => {
-              const lpct = l.total ? Math.round((l.checked/l.total)*100) : 0;
-              const accent = TASK_ACCENTS[li % TASK_ACCENTS.length];
-              return `
-              <div class="progress-subitem">
-                <span class="progress-subitem-dot" style="background:${accent};"></span>
-                <span class="progress-subitem-title">${l.label}</span>
-                <div class="progress-bar-track thin"><div class="progress-bar-fill" style="width:${lpct}%; background:${accent};"></div></div>
-                <span class="progress-subitem-count">${l.checked}/${l.total}</span>
-              </div>`;
-            }).join('')}
-          </div>` : ''}
-        </div>`;
-      }).join('') || '<p class="skill-note-empty">No windows yet.</p>'}
-    </div>
-  `;
-  card.querySelectorAll('.period-tab').forEach(b=>{
-    b.addEventListener('click', ()=>{ progressPeriod = b.dataset.p; render(); });
-  });
-}
-function renderProgressNav(){
-  const nav = document.createElement('div');
-  nav.className = 'nav';
-  nav.innerHTML = `
-    <button class="back-main" disabled>← Back</button>
-    <button id="doneProgressBtn" class="next-main">Done →</button>
-  `;
-  card.appendChild(nav);
-  document.getElementById('doneProgressBtn').addEventListener('click', ()=>{ view = 'grid'; render(); });
-}
-
 // ---------- to-do list (separate from habit windows — no schedule, no reset) ----------
 function setupTodoDragReorder(){
-  card.querySelectorAll('.todo-list').forEach(listEl=>{
-    listEl.querySelectorAll('.todo-drag').forEach(handle=>{
-      handle.addEventListener('pointerdown', (e)=> beginTodoDrag(e, listEl));
-    });
+  const listEl = card.querySelector('.todo-list:not(.fold-body)');
+  makeSortable(listEl, '.todo-row', 'data-id', async (ids) => {
+    await reorderTodos(activeTodoListId, ids);
+    renderTodoScreen();
   });
-}
-function beginTodoDrag(e, listEl){
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  const row = e.target.closest('.todo-row');
-  if (!row) return;
-  e.preventDefault();
-
-  const rows = Array.from(listEl.children).filter(el=> el.classList.contains('todo-row'));
-  if (rows.length < 2) return;
-  const listRect = listEl.getBoundingClientRect();
-  const rects = rows.map(r=> r.getBoundingClientRect());
-  const GAP = 10;
-
-  listEl.style.height = listRect.height + 'px';
-  rows.forEach((r,i)=>{
-    r.style.position = 'absolute';
-    r.style.left = '0';
-    r.style.right = '0';
-    r.style.top = (rects[i].top - listRect.top) + 'px';
-    r.style.transition = 'top 0.18s ease';
-    r.style.width = '100%';
-  });
-  listEl.style.position = 'relative';
-
-  const startIndex = rows.indexOf(row);
-  row.style.transition = 'none';
-  row.style.zIndex = 5;
-  row.classList.add('dragging');
-
-  let order = rows.map(r=> r.dataset.id);
-  const heightOf = id => rects[rows.findIndex(r=> r.dataset.id === id)].height;
-  const startY = e.clientY;
-  const rowStartTop = rects[startIndex].top - listRect.top;
-
-  function topsFromOrder(){
-    const tops = {};
-    let c = 0;
-    order.forEach(id=>{ tops[id] = c; c += heightOf(id) + GAP; });
-    return tops;
-  }
-
-  function onMove(ev){
-    const dy = ev.clientY - startY;
-    const newTop = rowStartTop + dy;
-    row.style.top = newTop + 'px';
-    const rowCenter = newTop + rects[startIndex].height / 2;
-
-    const fromIdx = order.indexOf(row.dataset.id);
-    const tops = topsFromOrder();
-    let targetIdx = fromIdx;
-    for (let i = 0; i < order.length; i++){
-      if (order[i] === row.dataset.id) continue;
-      const mid = tops[order[i]] + heightOf(order[i]) / 2;
-      if (i < fromIdx && rowCenter < mid){ targetIdx = i; break; }
-      if (i > fromIdx && rowCenter > mid){ targetIdx = i; }
-    }
-    if (targetIdx !== fromIdx){
-      order.splice(fromIdx, 1);
-      order.splice(targetIdx, 0, row.dataset.id);
-      const newTops = topsFromOrder();
-      order.forEach(id=>{
-        if (id === row.dataset.id) return;
-        const r = rows.find(rr=> rr.dataset.id === id);
-        r.style.top = newTops[id] + 'px';
-      });
-    }
-  }
-
-  function onUp(){
-    document.removeEventListener('pointermove', onMove);
-    document.removeEventListener('pointerup', onUp);
-    row.classList.remove('dragging');
-    row.style.zIndex = '';
-    const tops = topsFromOrder();
-    row.style.transition = 'top 0.18s ease';
-    row.style.top = tops[row.dataset.id] + 'px';
-    setTimeout(async ()=>{
-      await reorderTodos(activeTodoListId, order);
-      renderTodoScreen();
-    }, 180);
-  }
-
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp, { once: true });
 }
 function todayListFor(t){
   const own = todoLists.find(l => l.id === t.listId);
   if (own && isPinnedTodayList(own)) return null;
   return todoLists.find(isPinnedTodayList) || null;
 }
+function planButtonHTML(id, cls){
+  return `<button type="button" class="${cls} plan-btn" data-id="${id}" aria-haspopup="dialog" title="Plan for a date" aria-label="Plan for a date">P</button>`;
+}
+// Small built-in month picker, so "Plan" works the same in every browser.
+let planPop = null;
+function closePlanPicker(){ if (planPop){ planPop.remove(); planPop = null; } }
+function openPlanPicker(btn){
+  closePlanPicker();
+  const id = btn.dataset.id;
+  const today = new Date(); today.setHours(0,0,0,0);
+  let month = new Date(today.getFullYear(), today.getMonth(), 1);
+  const pop = document.createElement('div');
+  pop.className = 'plan-pop';
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', 'Pick a date');
+  const draw = () => {
+    const y = month.getFullYear(), m = month.getMonth();
+    const first = (new Date(y, m, 1).getDay() + 6) % 7; // Monday first
+    const days = new Date(y, m + 1, 0).getDate();
+    const canPrev = month > new Date(today.getFullYear(), today.getMonth(), 1);
+    let cells = '';
+    for (let i = 0; i < first; i++) cells += '<span></span>';
+    for (let d = 1; d <= days; d++){
+      const dt = new Date(y, m, d);
+      const past = dt < today;
+      const isToday = dt.getTime() === today.getTime();
+      cells += `<button type="button" class="pp-day ${isToday ? 'pp-today' : ''}" data-key="${localDateKey(dt)}" ${past ? 'disabled' : ''}>${d}</button>`;
+    }
+    pop.innerHTML = `
+      <div class="pp-head">
+        <button type="button" class="pp-nav" data-dir="-1" ${canPrev ? '' : 'disabled'} aria-label="Previous month">&larr;</button>
+        <span>${month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
+        <button type="button" class="pp-nav" data-dir="1" aria-label="Next month">&rarr;</button>
+      </div>
+      <div class="pp-dow">${['M','T','W','T','F','S','S'].map(x => `<span>${x}</span>`).join('')}</div>
+      <div class="pp-grid">${cells}</div>`;
+  };
+  draw();
+  pop.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const nav = e.target.closest('.pp-nav');
+    if (nav && !nav.disabled){ month = new Date(month.getFullYear(), month.getMonth() + Number(nav.dataset.dir), 1); draw(); return; }
+    const day = e.target.closest('.pp-day');
+    if (day && !day.disabled){ closePlanPicker(); planTodoFor(id, day.dataset.key); }
+  });
+  document.body.appendChild(pop);
+  planPop = pop;
+  const r = btn.getBoundingClientRect();
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  let left = Math.min(window.innerWidth - w - 8, Math.max(8, r.right - w));
+  let top = r.bottom + 6;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+}
+async function planTodoFor(id, key){
+  const t = todos.find(x => x.id === id);
+  if (!t || !key) return;
+  const target = todayListFor(t) || todos.find(x => x.id === id) && todoLists.find(l => l.id === t.listId);
+  if (target && t.listId !== target.id){
+    const maxOrder = todos.filter(x => x.listId === target.id).reduce((m,x)=> Math.max(m, x.order ?? 0), -1);
+    t.listId = target.id;
+    t.order = maxOrder + 1;
+    movedToTodayMsg = `“${t.text}” planned for ${new Date(key + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}.`;
+  }
+  t.slot = 'morning';
+  delete t.later;
+  if (key > todayKey()) t.dueDate = key; else delete t.dueDate;
+  await saveTodos();
+  render();
+}
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest && e.target.closest('.plan-btn');
+  if (btn){ e.stopPropagation(); e.preventDefault(); if (planPop && planPop.dataset.for === btn.dataset.id) closePlanPicker(); else { openPlanPicker(btn); planPop.dataset.for = btn.dataset.id; } return; }
+  if (planPop && !planPop.contains(e.target)) closePlanPicker();
+}, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePlanPicker(); });
+window.addEventListener('scroll', closePlanPicker, { passive: true });
 async function moveTodoToToday(id){
   const t = todos.find(x => x.id === id);
   const target = t && todayListFor(t);
@@ -3696,18 +4029,17 @@ async function moveTodoToToday(id){
   t.slot = 'morning';
   t.order = maxOrder + 1;
   await saveTodos();
-  movedToTodayMsg = `“${t.text}” moved to ${stripLeadingIcons(target.title)} (Morning).`;
+  movedToTodayMsg = `“${t.text}” moved to ${stripLeadingIcons(target.title)}.`;
   render();
 }
 let movedToTodayMsg = '';
 function renderTodoRow(t){
   return `
     <div class="todo-row ${t.done?'todo-row-done':''}" data-id="${t.id}">
-      <button class="todo-drag" data-id="${t.id}" aria-label="Drag to reorder">⠿</button>
-      <div class="todo-pill" style="background: color-mix(in srgb, ${t.color} 78%, #F3F2EE);" dir="auto">${(t.text||'').replace(/</g,'&lt;')}</div>
-      ${(!t.done && todayListFor(t)) ? `<button class="todo-to-today" data-id="${t.id}" aria-label="Move to Today tasks" title="Move to Today tasks">→ Today</button>` : ''}
       <button class="todo-check ${t.done?'checked':''}" data-id="${t.id}" aria-label="${t.done?'Mark not done':'Mark done'}">${t.done?CHECK_SVG_SM:''}</button>
-      <button class="todo-delete" data-id="${t.id}" aria-label="Delete task">✕</button>
+      <div class="todo-pill" dir="auto">${(t.text||'').replace(/</g,'&lt;')}</div>
+      ${(!t.done && todayListFor(t)) ? `<button class="todo-to-today" data-id="${t.id}" aria-label="Move to Today tasks" title="Move to Today tasks">T</button>${planButtonHTML(t.id, 'todo-to-today')}` : ''}
+      <button class="todo-delete" data-id="${t.id}" aria-label="Delete task">&times;</button>
     </div>
   `;
 }
@@ -3730,24 +4062,12 @@ function renderTodoScreen(){
           <label>Title</label>
           <input type="text" class="edit-input" dir="auto" id="todoListTitleInput" value="${list.title.replace(/"/g,'&quot;')}">
         </div>
-        <div class="edit-field" style="margin-bottom:16px;">
-          <label>Color</label>
-          <div class="todo-color-row" id="todoListColorRow">
-            ${LIST_COLORS.map(c => `<button class="todo-swatch ${c.hex===todoListColorDraft?'selected':''}" data-color="${c.hex}" style="background:${c.hex}" aria-label="${c.key}"></button>`).join('')}
-          </div>
-        </div>
       </div>
       <div class="actions">
         <button class="btn btn-primary" id="saveTodoListTitleBtn">Save</button>
         <button class="btn btn-secondary" id="cancelTodoListTitleBtn">Cancel</button>
       </div>
     `;
-    document.getElementById('todoListColorRow').querySelectorAll('.todo-swatch').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        todoListColorDraft = btn.dataset.color;
-        card.querySelectorAll('#todoListColorRow .todo-swatch').forEach(b=> b.classList.toggle('selected', b.dataset.color === todoListColorDraft));
-      });
-    });
     document.getElementById('saveTodoListTitleBtn').addEventListener('click', ()=>{
       const val = document.getElementById('todoListTitleInput').value;
       const color = todoListColorDraft;
@@ -3769,14 +4089,11 @@ function renderTodoScreen(){
     ${movedToTodayMsg ? `<div class="todo-moved-msg" dir="auto">${escHTML(movedToTodayMsg)}</div>` : ''}
     ${!listTodos.length ? '<p class="skill-note-empty">No tasks yet.</p>' : ''}
     ${pending.length ? `<div class="todo-list">${pending.map(renderTodoRow).join('')}</div>` : ''}
-    ${done.length ? `<div class="todo-section-label">Completed</div><div class="todo-list">${done.map(renderTodoRow).join('')}</div>` : ''}
-    <div class="edit-field" style="margin-top:6px;">
-      <input type="text" class="edit-input" dir="auto" id="todoTextInput" placeholder="Add a task...">
-    </div>
-    <div class="todo-color-row">
-      ${TODO_COLORS.map(c => `<button class="todo-swatch ${c.hex===todoSelectedColor?'selected':''}" data-color="${c.hex}" style="background:${c.hex}" aria-label="${c.key}"></button>`).join('')}
-    </div>
-    <button class="btn btn-primary" id="addTodoBtn">+ Add task</button>
+    <form class="tp-add todo-add-form" id="todoAddForm" autocomplete="off">
+      <input class="tp-add-input" dir="auto" id="todoTextInput" placeholder="Add a task…" enterkeyhint="done">
+      <button type="submit" class="tp-add-btn" id="addTodoBtn" aria-label="Add task">+</button>
+    </form>
+    ${done.length ? (() => { const o = foldOpen('completed-' + list.id, false); return `<button type="button" class="todo-section-label fold-toggle" data-fold="completed-${list.id}" aria-controls="todoDoneBody" aria-expanded="${o}"><span>Completed · ${done.length}</span><span class="fold-arrow">&darr;</span></button><div class="todo-list fold-body" id="todoDoneBody" ${o ? '' : 'hidden'}>${done.map(renderTodoRow).join('')}</div>`; })() : ''}
   `;
   card.querySelectorAll('.todo-swatch').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -3788,12 +4105,15 @@ function renderTodoScreen(){
   wireTodoScreen();
 }
 function wireTodoScreen(){
-  const addBtn = document.getElementById('addTodoBtn');
-  if (addBtn) addBtn.addEventListener('click', async ()=>{
+  const addForm = document.getElementById('todoAddForm');
+  if (addForm) addForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
     const input = document.getElementById('todoTextInput');
     const text = input.value.trim();
     if (!text) return;
-    await addTodo(text, todoSelectedColor, activeTodoListId);
+    await addTodo(text, '', activeTodoListId);
+    const again = document.getElementById('todoTextInput');
+    if (again) again.focus();
   });
   card.querySelectorAll('.todo-check').forEach(btn=>{
     btn.addEventListener('click', ()=> toggleTodoDone(btn.dataset.id));
@@ -3810,7 +4130,7 @@ function renderTodoNav(){
   const nav = document.createElement('div');
   nav.className = 'nav';
   nav.innerHTML = `
-    <button class="back-main" disabled>← Back</button>
+    <button class="back-main nav-overview">← Overview</button>
     <button id="doneTodoBtn" class="next-main">Done →</button>
   `;
   card.appendChild(nav);
@@ -3825,7 +4145,7 @@ function renderTodoNav(){
 function renderAddTodoListForm(){
   card.innerHTML = `
     ${ICONS.todo}
-    <h1 style="font-size:26px;">Add a to-do-list</h1>
+    <h1 style="font-size:26px;">Add a to-do list</h1>
     <p class="sub">Give it a name — e.g. "Work," "Home," "Errands."</p>
     <div class="edit-fields">
       <div class="edit-field">
@@ -3834,10 +4154,11 @@ function renderAddTodoListForm(){
       </div>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" id="confirmAddTodoListBtn">Add to-do-list</button>
+      <button class="btn btn-primary" id="confirmAddTodoListBtn">Add list</button>
       <button class="btn btn-secondary" id="cancelAddTodoListBtn">Cancel</button>
     </div>
     <div class="save-msg" id="todoListErrMsg"></div>
+    <div class="nav"><button class="back-main nav-overview">← Overview</button><span></span></div>
   `;
   document.getElementById('confirmAddTodoListBtn').addEventListener('click', async ()=>{
     const title = document.getElementById('newTodoListTitle').value.trim();
@@ -3875,24 +4196,14 @@ function renderOuterActions(){
       return;
     }
     outerActions.innerHTML = toggleHTML + `
-      <button class="outer-btn" id="addWindowOuterBtn">+ Add a skill</button>
-      <button class="outer-btn" id="addTodoListOuterBtn">+ Add a to-do-list</button>
-      <button class="outer-btn" id="reorderOuterBtn">⇅ Reorder windows</button>
-      <button class="outer-btn" id="progressOuterBtn">📈 Progress</button>
       <button class="outer-btn" id="calendarsOuterBtn">📅 iPhone calendar</button>
       <button class="outer-btn" id="backupOuterBtn">⬇ Backup</button>
       <button class="outer-btn" id="restoreOuterBtn">⬆ Restore</button>
-      <button class="outer-btn danger" id="signOutOuterBtn">⎋ Log out</button>
       <input type="file" id="restoreFileInput" accept="application/json" style="display:none">
     `;
     document.getElementById('optionsToggleBtn').addEventListener('click', toggleOptions);
-    document.getElementById('addWindowOuterBtn').addEventListener('click', ()=>{ addDraft = null; view = 'add'; render(); });
-    document.getElementById('addTodoListOuterBtn').addEventListener('click', ()=>{ view = 'addTodoList'; render(); });
-    document.getElementById('reorderOuterBtn').addEventListener('click', ()=>{ view = 'manage'; render(); });
-    document.getElementById('progressOuterBtn').addEventListener('click', ()=>{ view = 'progress'; render(); });
     document.getElementById('calendarsOuterBtn').addEventListener('click', ()=>{ view = 'calendars'; render(); });
     document.getElementById('backupOuterBtn').addEventListener('click', exportBackup);
-    document.getElementById('signOutOuterBtn').addEventListener('click', signOut);
     document.getElementById('restoreOuterBtn').addEventListener('click', ()=>{
       document.getElementById('restoreFileInput').click();
     });
@@ -3919,7 +4230,7 @@ function renderOuterActions(){
       return;
     }
     outerActions.innerHTML = `
-      <button class="outer-btn" id="editTodoListTitleBtn">✎ Edit list title & color</button>
+      <button class="outer-btn" id="editTodoListTitleBtn">✎ Edit list title</button>
       <button class="outer-btn danger" id="removeTodoListBtn">✕ Remove this list</button>
     `;
     document.getElementById('editTodoListTitleBtn').addEventListener('click', ()=>{ editingTodoListTitle = list.id; todoListColorDraft = listColorOf(list); render(); });
@@ -3934,7 +4245,7 @@ function renderOuterActions(){
   if (removeConfirmStep === s.id){
     outerActions.innerHTML = `
       <div class="outer-confirm">
-        <span>Remove this window?</span>
+        <span>Remove this skill?</span>
         <button class="outer-btn danger" id="confirmRemoveBtn">Yes, remove</button>
         <button class="outer-btn" id="cancelRemoveBtn">Cancel</button>
       </div>
@@ -3945,8 +4256,8 @@ function renderOuterActions(){
   }
 
   outerActions.innerHTML = `
-    <button class="outer-btn" id="editWindowOuterBtn">✎ Edit title, description & links</button>
-    <button class="outer-btn danger" id="removeWindowOuterBtn">✕ Remove this window</button>
+    <button class="outer-btn" id="editWindowOuterBtn">✎ Edit skill</button>
+    <button class="outer-btn danger" id="removeWindowOuterBtn">✕ Remove this skill</button>
   `;
   document.getElementById('editWindowOuterBtn').addEventListener('click', ()=>{
     editingWindow = s.id;
@@ -3954,7 +4265,8 @@ function renderOuterActions(){
       title: s.title, sub: s.sub || '',
       links: (s.links || []).map(l => ({...l, days: scheduleToDays(l.schedule)})),
       days: scheduleToDays(s.schedule),
-      note: skillNotes[s.id] || ''
+      note: skillNotes[s.id] || '',
+      color: s.color || ''
     };
     render();
   });
@@ -3963,6 +4275,7 @@ function renderOuterActions(){
 
 // ---------- master render ----------
 async function render(){
+  card.classList.toggle('is-home', !!currentUser && view === 'grid');
   if (!currentUser){ if (document.getElementById('authForm')) return; if (sb) renderAuth(authMode); else renderSetupNeeded(); return; }
   ensureToday();
   setProgress();
@@ -3982,13 +4295,6 @@ async function render(){
     return;
   }
 
-  if (view === 'progress'){
-    stepLabel.textContent = 'Progress';
-    renderProgress();
-    renderProgressNav();
-    outerActions.innerHTML = '';
-    return;
-  }
 
   if (view === 'todo'){
     const list = todoLists.find(l => l.id === activeTodoListId);
@@ -4029,7 +4335,6 @@ async function render(){
     } else {
       renderLinkStep(s);
     }
-    renderSkillNote(s);
     renderDetailNav(s);
     renderOuterActions();
     return;
@@ -4062,8 +4367,10 @@ async function loadAllState(){
     }
     if (needsSave) await saveTodos();
   } else {
-    todoLists = [{ id: 'todo-list-today', title: 'Today tasks' }];
+    const ex = exampleTodoLists();
+    todoLists = ex.lists;
     todos = todos.map(t => t.listId ? t : { ...t, listId: 'todo-list-today' });
+    if (!todos.length) todos = ex.todos;
     await saveTodoLists();
     if (todos.length) await saveTodos();
   }
@@ -4506,12 +4813,15 @@ function eventsForDay(k){
   return calEvents.filter(e => e.start < de && (e.end > ds || (e.start >= ds && e.end.getTime() === e.start.getTime())))
     .sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start));
 }
-function calEventDotsHTML(k){
-  if (!calEvents.length) return '';
-  const evs = eventsForDay(k);
-  if (!evs.length) return '';
-  const colors = [...new Set(evs.map(e => e.color))].slice(0, 3);
-  return `<span class="cal-evdots" aria-label="${evs.length} event${evs.length === 1 ? '' : 's'}">${colors.map(c => `<i style="--ec:${c}"></i>`).join('')}</span>`;
+// Small squares beside the date: yellow = to-do tasks that day, then one square per calendar colour with events.
+function calMarksHTML(k){
+  const marks = [];
+  if (dayHasTasks(k)) marks.push(`<i class="cm-task" title="Tasks"></i>`);
+  if (calEvents.length){
+    const evs = eventsForDay(k);
+    if (evs.length) marks.push(`<i style="--ec:#3A78DB" title="Calendar events"></i>`);
+  }
+  return marks.length ? `<span class="cal-marks" aria-hidden="true">${marks.join('')}</span>` : '';
 }
 function fmtClock(d){ return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); }
 function eventTimeLabel(e, k){
@@ -4530,16 +4840,19 @@ function renderEventsBlock(k){
   const isToday = k === todayKey();
   const now = new Date();
   const errs = calFeeds.filter(f => calFeedState[f.id] && calFeedState[f.id].error);
+  const evOpen = foldOpen('calendar', true);
   return `<section class="ev-block">
-    <div class="ev-head">
-      <h2 class="ev-title">${isToday ? 'Calendar' : 'Calendar · ' + escHTML(new Date(k + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</h2>
-      <div class="ev-count">${evs.length} event${evs.length === 1 ? '' : 's'}</div>
-    </div>
+    <button type="button" class="ev-head fold-toggle" data-fold="calendar" aria-controls="evBody" aria-expanded="${evOpen}">
+      <span class="ev-title" role="heading" aria-level="2" style="display:block">${isToday ? 'Calendar' : 'Calendar · ' + escHTML(new Date(k + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</span>
+      <div class="ev-count">${evs.length} event${evs.length === 1 ? '' : 's'}<span class="fold-arrow">&darr;</span></div>
+    </button>
+    <div class="fold-body" id="evBody" ${evOpen ? '' : 'hidden'}>
     ${evs.length ? `<ul class="ev-list">${evs.map(e => `<li class="ev-row ${isToday && !e.allDay && e.end < now ? 'past' : ''}" style="--ec:${e.color}">
         <span class="ev-time">${eventTimeLabel(e, k)}</span>
         <div class="ev-main"><div class="ev-name" dir="auto">${escHTML(e.title)}</div>${e.location ? `<div class="ev-loc" dir="auto">${escHTML(e.location)}</div>` : ''}</div>
       </li>`).join('')}</ul>` : `<p class="ev-empty">${calEvents.length || !errs.length ? 'No events.' : 'Events couldn\'t be loaded yet.'}</p>`}
     ${errs.length ? `<p class="ev-note">Calendar not updating — see Options › iPhone calendar</p>` : ''}
+    </div>
   </section>`;
 }
 
@@ -4585,7 +4898,7 @@ function renderCalendarsScreen(){
   `;
   const nav = document.createElement('div');
   nav.className = 'nav';
-  nav.innerHTML = `<button class="back-main" disabled>← Back</button><button id="doneCalBtn" class="next-main">Done →</button>`;
+  nav.innerHTML = `<button class="back-main nav-overview">← Overview</button><button id="doneCalBtn" class="next-main">Done →</button>`;
   card.appendChild(nav);
   document.getElementById('doneCalBtn').addEventListener('click', () => { calColorDraft = null; view = 'grid'; render(); });
   card.querySelectorAll('#calColorRow .todo-swatch').forEach(b => b.addEventListener('click', () => {
