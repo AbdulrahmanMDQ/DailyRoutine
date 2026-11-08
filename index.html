@@ -597,6 +597,16 @@
   .skill-color-row .todo-swatch{ width: 26px; height: 26px; }
   .tp-letter, .plan-btn, .todo-to-today{ width: 24px; height: 24px; padding: 0 !important; display:inline-flex; align-items:center; justify-content:center; font-family: var(--mono); font-size: 11px !important; letter-spacing: 0 !important; flex-shrink: 0; }
   .todo-row .todo-to-today{ align-self: center; }
+  /* skill items: list-style rows */
+  #linkListView{ display:flex; flex-direction:column; gap: 0 !important; border-top: 1px solid var(--ink); margin-top: 8px; }
+  #linkListView .li-row{ display:flex; align-items:center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); background: transparent; }
+  #linkListView .link-check{ width: 22px !important; height: 22px !important; min-height: 0 !important; flex-shrink: 0; border: 1px solid var(--ink); background: transparent; color: var(--ghost); padding: 0; display:flex; align-items:center; justify-content:center; }
+  #linkListView .link-check.checked{ background: var(--void); border-color: var(--void); }
+  #linkListView .link-check svg{ width: 12px; height: 12px; }
+  #linkListView .li-text{ flex: 1; min-width: 0; font-family: var(--sans); font-size: 16px; line-height: 1.35; color: var(--ink); text-decoration: none; display:flex; align-items:center; gap: 8px; }
+  #linkListView .li-link .li-arrow{ margin-left: auto; font-size: 13px; color: var(--ink-soft); padding-left: 8px; }
+  #linkListView .li-link:hover .li-arrow{ color: var(--bay); }
+  #linkListView .li-done .li-text{ color: var(--ink-soft); text-decoration: line-through; }
   .plan-btn{ position: relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
   .plan-btn:focus-within{ outline: 2px solid var(--bay); outline-offset: 1px; }
   .plan-pop{ position: fixed; z-index: 1000; width: 252px; background: var(--paper); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--void); padding: 10px; font-family: var(--sans); color: var(--ink); }
@@ -2211,12 +2221,12 @@ function renderLinkStep(s){
         const checked = !!linkState[i];
         const href = realUrl(l.url);
         const item = href
-          ? `<a class="btn ${l.primary?'btn-primary':'btn-secondary'} link-row-btn" href="${escHTML(href)}" target="_blank" rel="noopener">${escHTML(l.label)} <span class="btn-arrow">↗</span></a>`
-          : `<div class="link-row-btn link-task" dir="auto">${escHTML(l.label)}</div>`;
+          ? `<a class="li-text li-link" href="${escHTML(href)}" target="_blank" rel="noopener" dir="auto">${escHTML(l.label)}<span class="li-arrow" aria-hidden="true">↗</span></a>`
+          : `<span class="li-text" dir="auto">${escHTML(l.label)}</span>`;
         return `
-        <div class="link-row" data-idx="${i}">
+        <div class="link-row li-row ${checked ? 'li-done' : ''}" data-idx="${i}">
+          <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark incomplete':'Mark complete'}">${checked?CHECK_SVG_SM:''}</button>
           ${item}
-          <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark link incomplete':'Mark link complete'}">${checked?CHECK_SVG_SM:''}</button>
         </div>`;
       }).join('')}
     </div>` : ''}
