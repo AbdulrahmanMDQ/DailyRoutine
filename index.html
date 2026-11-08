@@ -188,8 +188,11 @@
   .nav button:focus-visible{ outline: 2px solid var(--bay); outline-offset:2px; }
   .back-main:disabled{ opacity:0; pointer-events:none; }
   .next-main:disabled{ opacity:0.4; cursor:not-allowed; }
-  .back-main{ background: transparent; color: var(--ink); padding-left: 0 !important; }
-  .back-main:hover{ text-decoration: underline; text-underline-offset: 4px; }
+  .back-main{ background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .back-main:hover{ background: var(--void); color: var(--ghost); }
+  .nav .back-main, .nav .next-main{ white-space: nowrap; }
+  .nav{ gap: 8px; }
+  @media (max-width:420px){ .nav .back-main, .nav .next-main{ padding: 12px 11px; font-size: 10px; letter-spacing: 0.06em; } }
   .next-main{ background: var(--void); color: var(--ghost) !important; }
   .next-main:hover{ background:#262626; }
   .next-main.complete-done{ background: var(--bay); color: var(--void) !important; }
@@ -476,6 +479,7 @@
   .win-grid .win-resize-handle svg{ opacity: 0; }
   .win-card[data-p] .win-check:not(.checked){ color: var(--ghost); }
   .win-card[data-p] .win-check.checked{ background: var(--ghost); border-color: var(--ghost); color: var(--void) !important; }
+  .win-card[data-p]::before{ content:'' !important; position:absolute; left:0; right:0; bottom:0; top:auto; width:auto; height: 5px; background: var(--tc); z-index: 1; pointer-events:none; }
   /* all text on skill boxes stays white; a soft shadow keeps it readable on light colours */
   .win-card[data-p], .win-card[data-p].win-done{ color: var(--ghost); }
   .win-card[data-p] .win-title{ text-shadow: none; }
@@ -609,8 +613,9 @@
   #linkListView .link-check.checked{ background: var(--void); border-color: var(--void); }
   #linkListView .link-check svg{ width: 12px; height: 12px; }
   #linkListView .li-text{ flex: 1; min-width: 0; font-family: var(--sans); font-size: 16px; line-height: 1.35; color: var(--ink); text-decoration: none; display:flex; align-items:center; gap: 8px; }
-  #linkListView .li-link .li-arrow{ margin-left: auto; font-size: 13px; color: var(--ink-soft); padding-left: 8px; }
-  #linkListView .li-link:hover .li-arrow{ color: var(--bay); }
+  #linkListView .li-toggle{ cursor: pointer; align-self: stretch; }
+  #linkListView .li-arrow{ flex-shrink: 0; width: 34px; height: 34px; margin: -6px 0; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border); color: var(--ink); text-decoration: none; font-size: 15px; }
+  #linkListView .li-arrow:hover{ background: var(--void); color: var(--ghost); border-color: var(--void); }
   #linkListView .li-done .li-text{ color: var(--ink-soft); text-decoration: line-through; }
   .plan-btn{ position: relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
   .plan-btn:focus-within{ outline: 2px solid var(--bay); outline-offset: 1px; }
@@ -2225,9 +2230,8 @@ function renderLinkStep(s){
       ${visible.map(({l,i}) => {
         const checked = !!linkState[i];
         const href = realUrl(l.url);
-        const item = href
-          ? `<a class="li-text li-link" href="${escHTML(href)}" target="_blank" rel="noopener" dir="auto">${escHTML(l.label)}<span class="li-arrow" aria-hidden="true">↗</span></a>`
-          : `<span class="li-text" dir="auto">${escHTML(l.label)}</span>`;
+        const item = `<span class="li-text li-toggle" data-idx="${i}" role="button" tabindex="0" dir="auto">${escHTML(l.label)}</span>`
+          + (href ? `<a class="li-arrow" href="${escHTML(href)}" target="_blank" rel="noopener" aria-label="Open link for ${escHTML(l.label)}" title="Open link">↗</a>` : '');
         return `
         <div class="link-row li-row ${checked ? 'li-done' : ''}" data-idx="${i}">
           <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark incomplete':'Mark complete'}">${checked?CHECK_SVG_SM:''}</button>
@@ -2236,8 +2240,9 @@ function renderLinkStep(s){
       }).join('')}
     </div>` : ''}
   `;
-  card.querySelectorAll('.link-check').forEach(btn=>{
+  card.querySelectorAll('.link-check, .li-toggle').forEach(btn=>{
     btn.addEventListener('click', ()=> toggleLinkComplete(s.id, parseInt(btn.dataset.idx, 10)));
+    if (btn.classList.contains('li-toggle')) btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); btn.click(); } });
   });
   setupLinkDragReorder(s.id);
 }
