@@ -614,9 +614,50 @@
   #linkListView .link-check svg{ width: 12px; height: 12px; }
   #linkListView .li-text{ flex: 1; min-width: 0; font-family: var(--sans); font-size: 16px; line-height: 1.35; color: var(--ink); text-decoration: none; display:flex; align-items:center; gap: 8px; }
   #linkListView .li-toggle{ cursor: pointer; align-self: stretch; }
+  #linkListView .li-row{ flex-wrap: wrap; }
+  #linkListView .li-read-toggle{ cursor: pointer; align-self: stretch; }
+  .li-read-caret{ margin-left: 2px; font-size: 11px; color: var(--ink-soft); transition: transform .18s ease; display:inline-block; }
+  .li-read-toggle[aria-expanded="true"] .li-read-caret{ transform: rotate(180deg); }
+  #linkListView .li-read{ box-sizing: border-box; flex: 0 0 calc(100% - 34px); max-width: calc(100% - 34px); margin: 10px 0 2px 34px; padding: 12px 14px; background: var(--paper); border-left: 3px solid var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.65; color: var(--ink); text-align: left; white-space: normal; overflow-wrap: anywhere; }
+  #linkListView .li-read[hidden]{ display:none; }
+  #linkListView .li-read p{ margin: 0; text-align: left; }
+  #linkListView .li-read p + p{ margin-top: 6px; }
+  #linkListView .li-read .li-read-gap{ height: 4px; }
+  .read-input{ resize: vertical; min-height: 38px; font-size: 14px !important; line-height: 1.5; }
   #linkListView .li-arrow{ flex-shrink: 0; width: 34px; height: 34px; margin: -6px 0; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border); color: var(--ink); text-decoration: none; font-size: 15px; }
   #linkListView .li-arrow:hover{ background: var(--void); color: var(--ghost); border-color: var(--void); }
   #linkListView .li-done .li-text{ color: var(--ink-soft); text-decoration: line-through; }
+  /* Daily Food */
+  .food-sec{ margin-top: 34px; grid-column: 1 / -1; }
+  .food-head{ display:flex; justify-content:space-between; align-items:flex-end; gap: 10px; padding: 0 0 8px !important; border-bottom: 1px solid var(--ink) !important; }
+  .food-title{ font-family: var(--serif); font-weight: 300; font-size: 22px; line-height: 1.05; letter-spacing: -0.01em; }
+  .food-title small{ font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink-soft); text-transform: uppercase; }
+  .food-head[aria-expanded="true"] .fold-arrow{ transform: rotate(180deg); }
+  .food-head[aria-expanded="false"] .fold-arrow{ transform: none; }
+  .food-totals{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 14px 0 6px; }
+  .food-totals div{ background: var(--void); color: var(--ghost); padding: 10px 8px 8px; display:flex; flex-direction:column; gap: 3px; }
+  .food-totals div:nth-child(2){ box-shadow: inset 0 -4px 0 #D9473A; }
+  .food-totals div:nth-child(3){ box-shadow: inset 0 -4px 0 #C8A57F; }
+  .food-totals div:nth-child(4){ box-shadow: inset 0 -4px 0 #3A6FD0; }
+  .food-totals div:nth-child(1){ box-shadow: inset 0 -4px 0 #2E8B7F; }
+  .food-totals b{ font-family: var(--serif); font-weight: 300; font-size: 22px; line-height: 1; }
+  .food-totals b i{ font-style: normal; font-size: 12px; margin-left: 1px; opacity: .8; }
+  .food-totals span{ font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; opacity: .75; }
+  .food-list{ list-style:none; margin: 6px 0 0; padding: 0; }
+  .food-row{ display:flex; flex-wrap: wrap; align-items:center; gap: 2px 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .food-name{ flex: 1 1 auto; min-width: 0; font-family: var(--sans); font-size: 15px; color: var(--ink); text-align: left; }
+  .food-macros{ order: 3; flex: 0 0 100%; font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); letter-spacing: 0.02em; }
+  .food-del{ order: 2; }
+  .food-add{ margin-top: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .food-in{ font-family: var(--sans); font-size: 16px; color: var(--ink); background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 8px 0; width: 100%; outline: none; -moz-appearance: textfield; }
+  .food-in::-webkit-outer-spin-button, .food-in::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+  .food-in:focus{ border-bottom-color: var(--ink); }
+  .food-in-name{ margin-bottom: 6px; }
+  .food-nums{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)) auto; gap: 8px; align-items: end; }
+  .food-nums label{ display:flex; flex-direction:column; gap: 2px; min-width: 0; }
+  .food-nums label span{ font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+  .food-msg{ margin: 6px 0 0; font-size: 12px; color: var(--danger); min-height: 0; }
+  .food-msg:empty{ display:none; }
   .plan-btn{ position: relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
   .plan-btn:focus-within{ outline: 2px solid var(--bay); outline-offset: 1px; }
   .plan-pop{ position: fixed; z-index: 1000; width: 252px; background: var(--paper); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--void); padding: 10px; font-family: var(--sans); color: var(--ink); }
@@ -1365,7 +1406,7 @@ async function rawDelete(key){
 
 // Keys that hold the user's data and are synced to their account.
 const SYNC_KEYS = ['routine-steps', 'skill-notes', 'completions', 'completion-history', 'link-history',
-  'weight-entries', 'todo-list', 'todo-lists', 'todo-done-log', 'todo-cleanup-date', 'calendar-feeds'];
+  'weight-entries', 'food-log', 'todo-list', 'todo-lists', 'todo-done-log', 'todo-cleanup-date', 'calendar-feeds'];
 
 window.storage = {
   async get(key, shared){
@@ -1636,6 +1677,8 @@ let completions = { day: '', done: {} };
 let history = {}; // { 'YYYY-MM-DD': { stepId: true, ... } }
 let linkHistory = {}; // { 'YYYY-MM-DD': { stepId: { linkIdx: true/false, ... } } } — per-link record, tracked from the day this feature shipped onward
 let progressPeriod = 'week';
+const openReadItems = new Set(); // reading items currently expanded (per session)
+let foodLog = {}; // { 'YYYY-MM-DD': [{ id, name, kcal, p, c, f }] }
 let todos = []; // [{ id, listId, text, color, done }] — one-off tasks, separate from habit windows
 let todoCleanupDate = null; // last date (YYYY-MM-DD) completed tasks were auto-cleared
 let todoLists = []; // [{ id, title }] — one or more named to-do lists
@@ -1663,6 +1706,13 @@ const SKILL_COLORS = [
 ];
 function skillColorRowHTML(current){
   return `<div class="edit-field"><label>Box colour</label><div class="todo-color-row skill-color-row">${SKILL_COLORS.map(c => `<button type="button" class="todo-swatch skill-swatch ${((current||'') === c.hex) ? 'selected' : ''} ${c.hex ? '' : 'swatch-auto'}" data-color="${c.hex}" style="${c.hex ? 'background:' + c.hex : ''}" aria-label="${c.key}" title="${c.key}">${c.hex ? '' : 'A'}</button>`).join('')}</div></div>`;
+}
+function wireReadInputs(){
+  card.querySelectorAll('.read-input').forEach(t => {
+    const grow = () => { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, 360) + 'px'; };
+    t.addEventListener('input', grow);
+    if (t.value) grow();
+  });
 }
 function wireSkillColorRow(draft){
   card.querySelectorAll('.skill-swatch').forEach(btn => btn.addEventListener('click', () => {
@@ -1807,6 +1857,79 @@ async function loadTodos(){
     });
     return list;
   }catch(e){ return []; }
+}
+async function loadFoodLog(){
+  try{ const res = await window.storage.get('food-log', false); const v = res ? JSON.parse(res.value) : {}; return (v && typeof v === 'object') ? v : {}; }
+  catch(e){ return {}; }
+}
+async function saveFoodLog(){
+  try{ await window.storage.set('food-log', JSON.stringify(foodLog), false); }
+  catch(e){ console.error('storage error', e); }
+}
+function foodNum(v){ const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) && n >= 0 ? Math.round(n * 10) / 10 : 0; }
+function fmtNum(n){ return (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 }); }
+function renderFoodSection(k){
+  const meals = foodLog[k] || [];
+  const tot = meals.reduce((a, m) => ({ kcal: a.kcal + (m.kcal || 0), p: a.p + (m.p || 0), c: a.c + (m.c || 0), f: a.f + (m.f || 0) }), { kcal: 0, p: 0, c: 0, f: 0 });
+  const o = foldOpen('sec-food', true);
+  const isToday = k === todayKey();
+  const dayLabel = isToday ? '' : new Date(k + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  return `<section class="food-sec">
+    <button type="button" class="food-head fold-toggle" data-fold="sec-food" aria-controls="foodBody" aria-expanded="${o}">
+      <span class="food-title" role="heading" aria-level="2">Daily Food${dayLabel ? ` <small>· ${escHTML(dayLabel)}</small>` : ''}</span>
+      <span class="ev-count">${meals.length ? fmtNum(tot.kcal) + ' kcal' : ''}<span class="fold-arrow">&darr;</span></span>
+    </button>
+    <div class="fold-body" id="foodBody" ${o ? '' : 'hidden'}>
+      <div class="food-totals">
+        <div><b>${fmtNum(tot.kcal)}</b><span>kcal</span></div>
+        <div><b>${fmtNum(tot.p)}<i>g</i></b><span>Protein</span></div>
+        <div><b>${fmtNum(tot.c)}<i>g</i></b><span>Carbs</span></div>
+        <div><b>${fmtNum(tot.f)}<i>g</i></b><span>Fat</span></div>
+      </div>
+      ${meals.length ? `<ul class="food-list">${meals.map(m => `<li class="food-row" data-id="${m.id}">
+          <span class="food-name" dir="auto">${escHTML(m.name || 'Meal')}</span>
+          <span class="food-macros">${fmtNum(m.kcal || 0)} kcal · P ${fmtNum(m.p || 0)} · C ${fmtNum(m.c || 0)} · F ${fmtNum(m.f || 0)}</span>
+          <button type="button" class="tp-del food-del" data-id="${m.id}" aria-label="Delete meal">&times;</button>
+        </li>`).join('')}</ul>` : '<p class="tp-empty">No meals logged yet.</p>'}
+      <form class="food-add" id="foodAddForm" data-day="${k}" autocomplete="off">
+        <input class="food-in food-in-name" name="name" dir="auto" placeholder="Meal (e.g. Breakfast)" enterkeyhint="next">
+        <div class="food-nums">
+          <label><input class="food-in" name="kcal" type="number" inputmode="decimal" min="0" step="any" placeholder="0"><span>kcal</span></label>
+          <label><input class="food-in" name="p" type="number" inputmode="decimal" min="0" step="any" placeholder="0"><span>P g</span></label>
+          <label><input class="food-in" name="c" type="number" inputmode="decimal" min="0" step="any" placeholder="0"><span>C g</span></label>
+          <label><input class="food-in" name="f" type="number" inputmode="decimal" min="0" step="any" placeholder="0"><span>F g</span></label>
+          <button type="submit" class="tp-add-btn" aria-label="Add meal">+</button>
+        </div>
+        <p class="food-msg" id="foodMsg" role="status"></p>
+      </form>
+    </div>
+  </section>`;
+}
+function wireFoodSection(){
+  const form = card.querySelector('#foodAddForm');
+  if (!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const meal = { id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: String(fd.get('name') || '').trim(),
+      kcal: foodNum(fd.get('kcal')), p: foodNum(fd.get('p')), c: foodNum(fd.get('c')), f: foodNum(fd.get('f')) };
+    if (!meal.name && !meal.kcal && !meal.p && !meal.c && !meal.f){
+      const m = card.querySelector('#foodMsg'); if (m) m.textContent = 'Enter a meal name or some numbers first.';
+      return;
+    }
+    const k = form.dataset.day;
+    (foodLog[k] = foodLog[k] || []).push(meal);
+    await saveFoodLog();
+    renderGrid();
+    const again = card.querySelector('#foodAddForm .food-in-name'); if (again) again.focus({ preventScroll: true });
+  });
+  card.querySelectorAll('.food-del').forEach(btn => btn.addEventListener('click', async () => {
+    const k = form.dataset.day;
+    foodLog[k] = (foodLog[k] || []).filter(m => m.id !== btn.dataset.id);
+    if (!foodLog[k].length) delete foodLog[k];
+    await saveFoodLog();
+    renderGrid();
+  }));
 }
 async function saveTodos(){
   try{ await window.storage.set('todo-list', JSON.stringify(todos), false); }
@@ -2230,8 +2353,13 @@ function renderLinkStep(s){
       ${visible.map(({l,i}) => {
         const checked = !!linkState[i];
         const href = realUrl(l.url);
-        const item = `<span class="li-text li-toggle" data-idx="${i}" role="button" tabindex="0" dir="auto">${escHTML(l.label)}</span>`
-          + (href ? `<a class="li-arrow" href="${escHTML(href)}" target="_blank" rel="noopener" aria-label="Open link for ${escHTML(l.label)}" title="Open link">↗</a>` : '');
+        const readText = (l.read || '').trim();
+        const isOpen = readText && openReadItems.has(s.id + ':' + i);
+        const item = (readText
+            ? `<span class="li-text li-read-toggle" data-idx="${i}" role="button" tabindex="0" aria-expanded="${isOpen}" aria-controls="read-${i}" dir="auto">${escHTML(l.label)}<span class="li-read-caret" aria-hidden="true">&#9662;</span></span>`
+            : `<span class="li-text li-toggle" data-idx="${i}" role="button" tabindex="0" dir="auto">${escHTML(l.label)}</span>`)
+          + (href ? `<a class="li-arrow" href="${escHTML(href)}" target="_blank" rel="noopener" aria-label="Open link for ${escHTML(l.label)}" title="Open link">↗</a>` : '')
+          + (readText ? `<div class="li-read" id="read-${i}" ${isOpen ? '' : 'hidden'}>${readText.split(/\n/).map(line => line.trim() ? `<p dir="auto">${escHTML(line)}</p>` : '<p class="li-read-gap"></p>').join('')}</div>` : '');
         return `
         <div class="link-row li-row ${checked ? 'li-done' : ''}" data-idx="${i}">
           <button class="link-check ${checked?'checked':''}" data-idx="${i}" aria-label="${checked?'Mark incomplete':'Mark complete'}">${checked?CHECK_SVG_SM:''}</button>
@@ -2240,6 +2368,18 @@ function renderLinkStep(s){
       }).join('')}
     </div>` : ''}
   `;
+  card.querySelectorAll('.li-read-toggle').forEach(btn=>{
+    const flip = () => {
+      const key = s.id + ':' + btn.dataset.idx;
+      const box = card.querySelector('#read-' + btn.dataset.idx);
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      if (open) openReadItems.add(key); else openReadItems.delete(key);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (box) box.hidden = !open;
+    };
+    btn.addEventListener('click', flip);
+    btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); flip(); } });
+  });
   card.querySelectorAll('.link-check, .li-toggle').forEach(btn=>{
     btn.addEventListener('click', ()=> toggleLinkComplete(s.id, parseInt(btn.dataset.idx, 10)));
     if (btn.classList.contains('li-toggle')) btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); btn.click(); } });
@@ -2413,8 +2553,9 @@ function captureEditDraftFromInputs(){
     const label = row.querySelector('[data-k="label"]').value;
     const urlEl = row.querySelector('[data-k="url"]');
     const url = urlEl ? urlEl.value : '';
+    const readEl = row.querySelector('[data-k="read"]');
     const prev = editDraft.links[i] || {};
-    links.push({ label, url, days: prev.days || [0,1,2,3,4,5,6], withLink: !!urlEl });
+    links.push({ label, url, read: readEl ? readEl.value : (prev.read || ''), days: prev.days || [0,1,2,3,4,5,6], withLink: !!urlEl });
   });
   editDraft.links = links;
 }
@@ -2430,6 +2571,7 @@ function renderLinkRowsHTML(links){
         <div class="link-edit-fields">
           <input type="text" class="edit-input" dir="auto" data-k="label" placeholder="Name (e.g. Read 5 pages)" value="${(l.label||'').replace(/"/g,'&quot;')}">
           <input type="url" class="edit-input" dir="ltr" data-k="url" placeholder="Link (optional)" value="${(l.url||'').replace(/"/g,'&quot;')}">
+          <textarea class="edit-input read-input" dir="auto" data-k="read" rows="${(l.read||'').trim() ? 4 : 1}" placeholder="Text to read (optional)">${escHTML(l.read || '')}</textarea>
         </div>
         <button class="link-remove-btn" data-idx="${i}" aria-label="Remove link">✕</button>
       </div>
@@ -2506,6 +2648,7 @@ function renderWindowEditor(s){
   document.getElementById('addItemPlainBtn').addEventListener('click', ()=> addEditItem(false));
   wireLinkKindButtons(()=> editDraft, captureEditDraftFromInputs);
   wireSkillColorRow(editDraft);
+  wireReadInputs();
   card.querySelectorAll('.link-remove-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       captureEditDraftFromInputs();
@@ -2525,10 +2668,11 @@ function renderWindowEditor(s){
       return;
     }
     const finalLinks = editDraft.links
-      .filter(l => (l.url||'').trim() || (l.label||'').trim())
+      .filter(l => (l.url||'').trim() || (l.label||'').trim() || (l.read||'').trim())
       .map((l,i) => ({
-        label: (l.label||'').trim() || ((l.url||'').trim() ? 'Open App' : 'Task'),
+        label: (l.label||'').trim() || ((l.url||'').trim() ? 'Open App' : ((l.read||'').trim() ? 'Read' : 'Task')),
         url: (l.url||'').trim(),
+        read: (l.read||'').trim(),
         primary: i===0,
         schedule: computeScheduleFromDays(l.days || [0,1,2,3,4,5,6])
       }));
@@ -3271,7 +3415,9 @@ function renderGrid(){
       <div class="grid-divider gd-fold" data-sec="lists" role="button" tabindex="0" aria-expanded="${foldOpen('sec-lists', true)}"><span>Tasks / Ideas</span><span class="gd-actions"><button type="button" class="gd-add" id="gdAddList" aria-label="Add a to-do list" title="Add a to-do list">+</button><span class="gd-arrow fold-arrow">&darr;</span></span></div>
       ${otherLists.map(list => todoTileHTML(list, false)).join('')}
     </div>
+    ${renderFoodSection(viewingDate || todayKey())}
   `;
+  wireFoodSection();
   card.querySelectorAll('.win-card[data-id]').forEach(el=>{
     el.addEventListener('click', ()=>{
       if (justDraggedGrid) return;
@@ -3762,8 +3908,9 @@ function captureAddDraftFromInputs(){
     const label = row.querySelector('[data-k="label"]').value;
     const urlEl = row.querySelector('[data-k="url"]');
     const url = urlEl ? urlEl.value : '';
+    const readEl = row.querySelector('[data-k="read"]');
     const prev = addDraft.links[i] || {};
-    links.push({ label, url, days: prev.days || [0,1,2,3,4,5,6], withLink: !!urlEl });
+    links.push({ label, url, read: readEl ? readEl.value : (prev.read || ''), days: prev.days || [0,1,2,3,4,5,6], withLink: !!urlEl });
   });
   addDraft.links = links;
 }
@@ -3803,6 +3950,7 @@ function renderAddForm(){
   document.getElementById('addItemPlainBtn').addEventListener('click', ()=> addNewItem(false));
   wireLinkKindButtons(()=> addDraft, captureAddDraftFromInputs);
   wireSkillColorRow(addDraft);
+  wireReadInputs();
   card.querySelectorAll('.link-remove-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       captureAddDraftFromInputs();
@@ -3822,10 +3970,11 @@ function renderAddForm(){
       return;
     }
     const finalLinks = addDraft.links
-      .filter(l => (l.url||'').trim() || (l.label||'').trim())
+      .filter(l => (l.url||'').trim() || (l.label||'').trim() || (l.read||'').trim())
       .map((l,i) => ({
-        label: (l.label||'').trim() || ((l.url||'').trim() ? 'Open App' : 'Task'),
+        label: (l.label||'').trim() || ((l.url||'').trim() ? 'Open App' : ((l.read||'').trim() ? 'Read' : 'Task')),
         url: (l.url||'').trim(),
+        read: (l.read||'').trim(),
         primary: i===0,
         schedule: computeScheduleFromDays(l.days || [0,1,2,3,4,5,6])
       }));
@@ -4375,6 +4524,7 @@ async function loadAllState(){
   history = await loadHistory();
   linkHistory = await loadLinkHistory();
   todos = await loadTodos();
+  foodLog = await loadFoodLog();
   const loadedLists = await loadTodoLists();
   if (loadedLists){
     todoLists = loadedLists;
